@@ -5,9 +5,57 @@ import contextlib
 import wave
 from pydub import AudioSegment
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+
+#  艺术字标题比较复杂，先用做好的图片艺术字替代 有点慢
+def add_text(text_image_dir, image, frame_size):
+    text_image_name = os.listdir(text_image_dir)
+    text_image_id = random.randint(0, len(text_image_name) -1)
+    text_image_path = os.path.join(text_image_dir, text_image_name[text_image_id])
+    text_image = cv2.imread(text_image_path)
+    text_image = cv2.resize(text_image, (frame_size[1], int(frame_size[1]/text_image.shape[1]*text_image.shape[0])))
+    for i in range(text_image.shape[0]):
+        for j in range(text_image.shape[1]):
+            # 认为不是文字部分
+            if np.sum(text_image[i, j, :]) < 20:
+                continue
+            image[100+i, j, :] = text_image[i, j, :]
+    return image
+
+
+# 直接打印文字
+def add_text_simple(image, frame_size):
+
+    text_content_1 = "容易招桃花的头像"
+    text_content_2 = "WeChat."
+
+    # 按字符串长的计算
+    font_size = int(frame_size[1] / (len(text_content_1) + 3))
+    # 变色效果
+    # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    color = (255, 0, random.randint(0, 255))
+
+    cv2img = cv2.cvtColor( image.astype(np.uint8), cv2.COLOR_BGR2RGB)
+    pilimg = Image.fromarray(cv2img)
+
+    # PIL图片上打印汉字
+    draw = ImageDraw.Draw(pilimg)
+    font = ImageFont.truetype("TTF/1.ttf", font_size, encoding="utf-8")
+    draw.text((int(font_size * 1.5), int(font_size * 1.5)), text_content_1, color, font=font)
+
+    # 英文长短要压缩一半
+    draw.text((int((frame_size[1] - font_size * len(text_content_2) / 2) / 2 ), int(font_size * 2.5)), text_content_2, color, font=font)
+    cv2charimg = cv2.cvtColor(np.array(pilimg), cv2.COLOR_RGB2BGR)
+
+    # cv2.imshow('im', cv2charimg)
+    # cv2.waitKey(-1)
+
+    return cv2charimg
+
 
 # 设置需要生成的视频数量
-video_number = 10
+video_number = 30
 # 设置生成视频的帧率， 【似乎素材都是等于30】
 video_fps = 30
 # 设置视频的分辨率【9:16】
@@ -15,8 +63,10 @@ video_size = [1080, 1920] # 【1080, 1920】 None则根据第一段素材分辨�
 
 # 存放音乐
 music_dir = 'music'
+# 文字图片素材
+text_image_dir = 'text_image'
 # 存放开头热门素材
-begin_video_dir = 'begin_video'
+begin_video_dir = 'H:/dy_data/0814/begin_video'
 # 存放原图
 source_image_dir = 'source_image'
 # 存放抖音运镜处理后的视频素材
@@ -24,14 +74,13 @@ render_image_dir = 'render_image'
 # 存放醒图处理后的图片素材
 show_image_dir = 'show_image'
 # 保存路径
-video_save_dir = 'video_save'
+video_save_dir = 'H:/dy_data/0814/video_save'
 
 music_name = os.listdir(music_dir)
 image_name = os.listdir(source_image_dir)
 begin_video_name = os.listdir(begin_video_dir)
 
 # TODO 目前只能预先定义好对应要的bgm要卡点的位置
-# mp3_position = [5.9, 6.6, 7.3, 7.9, 8.5, 9.1, 9.8, 10.5, 11.1, 11.8, 12.4]
 mp3_position = [5.9, 6.6, 7.3, 7.9, 8.5, 9.1, 9.8, 10.5, 11.1, 11.8, 12.4]
 # 视频展示头像图片的数量，第一个间隔是放热门吸引素材视频
 image_number_per_video = int((len(mp3_position) - 1) / 2)
@@ -105,6 +154,8 @@ for i in range(video_number):
         # 用于上下居中的目的 下同
         height_start = int((frame_size[0] - begin_video_resize_height) / 2)
         new_frame[height_start:height_start+begin_video_resize_height, :, :] = frame
+        # new_frame = add_text(text_image_dir, new_frame, frame_size)
+        new_frame = add_text_simple(new_frame, frame_size)
         video_out.write(np.uint8(new_frame))
         part_0_frame_num = part_0_frame_num - 1
         if part_0_frame_num == 0:
@@ -122,9 +173,10 @@ for i in range(video_number):
         part_cap = cv2.VideoCapture(render_image_path)
         part_1_0_frame_num = int((mp3_position[part_id * 2 + 1] - mp3_position[part_id * 2]) * begin_video_fps)
         part_cap_frame_num = part_cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        if part_cap_frame_num - part_1_0_frame_num < 0:
+        if (part_cap_frame_num - part_1_0_frame_num) < 0:
             # TODO 要保证运镜后视频大于所需的长度
             assert 'render video error!'
+            exit()
         part_1_0_start_frame_id = random.randint(0, (part_cap_frame_num - part_1_0_frame_num))
         while part_cap.isOpened() and part_1_0_start_frame_id >= 0:
 
