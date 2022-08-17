@@ -31,7 +31,7 @@ class MainGUI(tk.Tk):
         self.select_order_btn.pack(expand=True)
         self.select_order_btn.bind("<Button>", lambda e: AddData(self))
 
-        self.rename_comment_btn = tk.Button(self.main_frame, text="合成视频", width=bt_width, height=bt_height)
+        self.rename_comment_btn = tk.Button(self.main_frame, text="合成视频(视频+图片+合成模式)", width=bt_width, height=bt_height)
         self.rename_comment_btn.pack(expand=True)
         self.rename_comment_btn.bind("<Button>", lambda e: AddData(self))
 
