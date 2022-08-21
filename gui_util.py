@@ -59,9 +59,6 @@ class TkImageCacheCollection():
         return tk_image
 
 
-
-pass
-
 def create_list_box_selector(cls):
     class ListBoxSelector(cls):
         def __init__(self, list_names, title):
@@ -106,7 +103,91 @@ def create_list_box_selector(cls):
     return ListBoxSelector
 
 
+
+class ListImageManager(tk.Frame):
+    def __init__(self, parent, image_dict={}, frame_width=200+50, frame_height=700, image_size=100):
+        tk.Frame.__init__(self, parent)
+
+        self.column_num = int(frame_width / image_size)
+        self.row_num = int(frame_height / image_size)
+        print(self.row_num, self.column_num)
+        self.image_size = image_size
+
+
+        self.main_frame = tk.Frame(self, width=frame_width, height=frame_height, bd=2, highlightcolor='black', highlightbackground='black', highlightthickness=1)
+        self.main_frame.grid(row=self.row_num, column=self.column_num)
+        self.main_frame.grid_propagate(0)
+
+        self.list_image_cache = TkImageCacheCollection(cache_size=image_size)
+
+        self.image_count = 0
+        for name, path in image_dict.items():
+            row_index = int(self.image_count / self.column_num)
+            column_index = self.image_count - row_index * self.row_num
+            print(row_index, column_index)
+            tk.Button(self.main_frame, text=name, overrelief='sunken', image=self.list_image_cache.add_by_path(path, name),
+                      width=image_size, cursor="arrow", command=lambda :self.delete(name)).grid(row=row_index, column=column_index)
+            self.image_count += 1
+
+    def add(self, path, tk_image):
+        insert_flag = False
+        for btn in self.main_frame.winfo_children():
+            if btn['text'] == "":
+                print("add to exists")
+                btn['image'] = tk_image
+                btn['command'] = lambda :self.delete(path)
+                insert_flag = True
+
+        if not insert_flag:
+            row_index = int(self.image_count / self.column_num)
+            column_index = self.image_count - row_index * self.column_num
+            print(row_index, column_index)
+            tk.Button(self.main_frame, text=path, overrelief='sunken',
+                      image=tk_image,
+                      width=self.image_size, cursor="arrow", command=lambda: self.delete(path)).grid(row=row_index,
+                                                                                                column=column_index)
+            self.image_count += 1
+        self.main_frame.configure(height=700)
+
+    def add_by_cv_frame(self, frame, path):
+        if self.is_exists(path):
+            return
+        tk_image = self.list_image_cache.add_by_cv_frame(frame, path)
+        self.add(path, tk_image)
+
+    def add_by_path(self, path):
+        if self.is_exists(path):
+            return
+        tk_image = self.list_image_cache.add_by_path(path)
+        self.add(path, tk_image)
+
+    def delete(self, path):
+        for btn in self.main_frame.winfo_children():
+            if btn['text'] == path:
+                btn['text'] = ''
+                btn['command'] = None
+
+    def is_exists(self, path):
+        for btn in self.main_frame.winfo_children():
+            if btn['text'] == path:
+                return True
+        return False
+
+    @property
+    def image_list(self):
+        pathes = []
+        for btn in self.main_frame.winfo_children():
+            if btn['text'] != "":
+                pathes.append(btn['text'])
+
+        return pathes
+
 if __name__ == "__main__":
+    from gui_compose_video import ListImageSelector
+    from data_util import DYDataUtils
+
+    dy_data_utils = DYDataUtils("")
+
     items = ['apple', 'orange', 'pear', 'grape']
     ListBoxClass = create_list_box_selector(tk.Toplevel)
     list_box = ListBoxClass(items, "list test")

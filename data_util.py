@@ -5,15 +5,33 @@ class DYDataUtils():
     def __init__(self, data_root):
         self.data_root = data_root
 
-    def get_image_dir(self):
+    @property
+    def image_dir(self):
         return os.path.join(self.data_root, "image")
 
-    def get_effects_dir(self):
+    @property
+    def effects_dir(self):
         return os.path.join(self.data_root, "image_effects")
 
-    def get_compose_dir(self):
+    @property
+    def compose_dir(self):
         return os.path.join(self.data_root, "image_compose")
 
+    @property
+    def music_dir(self):
+        return os.path.join(self.data_root, "music")
+
+    @property
+    def video_dir(self):
+        return os.path.join(self.data_root, "video")
+
+    @property
+    def fonts_dir(self):
+        return os.path.join(self.data_root, "fonts")
+
+    @property
+    def device_dir(self):
+        return os.path.join(self.data_root, "device")
 
     @staticmethod
     def get_dir_names(path):
@@ -28,14 +46,27 @@ class DYDataUtils():
         image_dir = os.path.join(self.data_root, "image")
         return DYDataUtils.get_dir_names(image_dir)
 
-
-    def get_effects_ids(self):
+    @property
+    def effects_ids(self):
         image_dir = os.path.join(self.data_root, "image_effects")
         return DYDataUtils.get_dir_names(image_dir)
 
+    @property
+    def compose_ids(self):
+        image_dir = os.path.join(self.data_root, "image_compose")
+        return DYDataUtils.get_dir_names(image_dir)
+
+    @property
+    def device_ids(self):
+        devices = []
+
+        for dir in os.listdir(self.device_dir):
+            if os.path.isdir(os.path.join(self.device_dir, dir)):
+               devices.append(dir)
+        return devices
 
     def get_compose_ids_pathes(self):
-        image_dir = os.path.join(self.data_root, "image_compose")
+        image_dir = self.compose_dir
         id_pathes = {}
 
         for dir in os.listdir(image_dir):
@@ -70,6 +101,8 @@ def md5(file_path):
 if __name__ == "__main__":
     data_root = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data"
     data_utils = DYDataUtils(data_root)
+    print(data_utils.get_fonts_dir)
+
     print(data_utils.get_avilable_group_num("女生头像"))
 
     print(md5("/Users/meitu/Downloads/8.13/1-1/1-1.jpg"))

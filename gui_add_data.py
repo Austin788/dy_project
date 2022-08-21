@@ -149,7 +149,6 @@ class AddData(Toplevel):
 
         self.myframe = Frame(self)
         self.myframe.grid(row=4, columnspan=7, sticky=tk.NSEW)
-        self.myframe.winfo_children()
 
         self.canvas = Canvas(self.myframe, height=self.myframe.winfo_height())
         self.frame = Frame(self.canvas)
@@ -403,7 +402,7 @@ class AddData(Toplevel):
 
     def select_effect_ID(self, ui):
         ListBoxClass = create_list_box_selector(tk.Toplevel)
-        items = self.dy_data_utils.get_effects_ids()
+        items = self.dy_data_utils.effects_ids
         print(items)
         list_box_dialog = ListBoxClass(items, "请选择效果名称")
         self.wait_window(list_box_dialog)  # 这一句很重要！！
@@ -449,7 +448,7 @@ class AddData(Toplevel):
             count = frame_list[0].winfo_children()[0]['text']
             save_name = f"{group_num}_{count}_{image_md5}"
             # shutil.copy(path, os.path.join(self.dy_data_utils.get_image_dir(), str(type), f"{save_name}.jpg"))
-            print(path, os.path.join(self.dy_data_utils.get_image_dir(), str(export_type), f"{save_name}.jpg"))
+            print(path, os.path.join(self.dy_data_utils.image_dir(), str(export_type), f"{save_name}.jpg"))
 
             for frame in frame_list:
                 #拷贝效果
@@ -457,14 +456,14 @@ class AddData(Toplevel):
                     effect_path = frame.winfo_children()[3]['text']
                     effect_id = frame.winfo_children()[7]['text']
                     # shutil.copy(str(effect_path), os.path.join(self.dy_data_utils.get_effects_dir(), effect_id, f"{save_name}.mp4"))
-                    print(str(effect_path), os.path.join(self.dy_data_utils.get_effects_dir(), effect_id, f"{save_name}.mp4"))
+                    print(str(effect_path), os.path.join(self.dy_data_utils.effects_dir(), effect_id, f"{save_name}.mp4"))
 
                 #拷贝合成
                 if frame.winfo_children()[6]['text'] != "":
                     compose_path = frame.winfo_children()[5]['text']
                     compose_id = frame.winfo_children()[8]['text']
                     # shutil.copy(str(compose_path), os.path.join(self.dy_data_utils.get_compose_dir(), compose_id, f"{save_name}.jpg"))
-                    print(str(compose_path), os.path.join(self.dy_data_utils.get_compose_dir(), compose_id, f"{save_name}.jpg"))
+                    print(str(compose_path), os.path.join(self.dy_data_utils.compose_dir(), compose_id, f"{save_name}.jpg"))
 
 if __name__ == "__main__":
     analyse = AddData()
