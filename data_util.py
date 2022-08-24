@@ -84,8 +84,9 @@ class DYDataUtils():
         for image_name in os.listdir(image_dir):
             if image_name.startswith("."):
                 continue
-            group_num = int(image_name.split("_")[0])
-            group_list.append(group_num)
+            if image_name.find("_") != -1:
+                group_num = int(image_name.split("_")[0])
+                group_list.append(group_num)
         if len(group_list) == 0:
             return 1
         return max(group_list) + 1

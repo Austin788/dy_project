@@ -17,9 +17,15 @@ from gui_util import *
 from data_util import *
 import shutil
 
+"""
+TODO List
+
+1.批量选择默认效果
+2.选择默认路径
+"""
 
 class ListImageSelector(tk.Toplevel):
-    def __init__(self, first_image_path, other_image_dict, first_image_name="原图", title="请选择使用的模板", image_size=200):
+    def __init__(self, first_image_path=None, other_image_dict=None, first_image_name="原图", title="请选择使用的模板", image_size=200):
         super().__init__()
         self.title(title)
 
@@ -40,11 +46,16 @@ class ListImageSelector(tk.Toplevel):
         self.main_frame.grid(row=row_num, column=column_num)
 
         self.list_image_cache = TkImageCacheCollection(cache_size=image_size)
-        compare_image = self.list_image_cache.add_by_path(first_image_path, first_image_name)
+
         self.select_path = None
 
-        tk.Button(self.main_frame, text=first_image_name[:10], image=compare_image, width=image_size, compound=BOTTOM).grid(row=0, column=0)
-        i = 1
+        if first_image_path is not None:
+            compare_image = self.list_image_cache.add_by_path(first_image_path, first_image_name)
+            tk.Button(self.main_frame, text=first_image_name[:10], image=compare_image, width=image_size, compound=BOTTOM).grid(row=0, column=0)
+            i = 1
+        else:
+            i = 0
+
         for name, path in other_image_dict.items():
             row_index = int(i / column_num)
             column_index = i - row_index * row_num
@@ -70,12 +81,10 @@ class AddData(Toplevel):
         y = int((screenheight - height) / 2)
 
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))  # 大小以及位置
-        # self.main_frame = tk.Frame(self, width=width, height=height)
-        # self.grid(row=2, column=7)
 
         # self.grid_rowconfigure(0, weight=1)
         # self.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(5, weight=1)
         # self.grid_rowconfigure(3, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
@@ -127,28 +136,34 @@ class AddData(Toplevel):
                                                     column=count)
             count += 1
 
-        tk.Label(self, text="操作:").grid(row=2, column=0)
+        tk.Label(self, text="默认选项:").grid(row=2, column=0)
+        self.default_effect_btn = tk.Button(self, text="选择效果ID", command=self.select_default_effect_ID, width=button_width)
+        self.default_effect_btn.grid(row=2, column=1)
+        self.default_compose_btn = tk.Button(self, text="选择合成ID", command=self.select_default_compose_ID, width=button_width)
+        self.default_compose_btn.grid(row=2, column=2)
+
+        tk.Label(self, text="操作:").grid(row=3, column=0)
         self.add_image_btn = tk.Button(self, text="添加图片", command=self.add_image, width=button_width, state=DISABLED)
-        self.add_image_btn.grid(row=2, column=1)
+        self.add_image_btn.grid(row=3, column=1)
         self.add_effect_btn = tk.Button(self, text="添加效果", command=self.add_effect, width=button_width, state=DISABLED)
-        self.add_effect_btn.grid(row=2, column=2)
+        self.add_effect_btn.grid(row=3, column=2)
         self.add_compose_btn = tk.Button(self, text="添加合成", command=self.add_compose, width=button_width, state=DISABLED)
-        self.add_compose_btn.grid(row=2, column=3)
+        self.add_compose_btn.grid(row=3, column=3)
         self.complete_current_btn = tk.Button(self, text="完成该图片", command=self.complete_current, width=button_width, state=NORMAL)
-        self.complete_current_btn.grid(row=2, column=4)
+        self.complete_current_btn.grid(row=3, column=4)
         self.complete_all_btn = tk.Button(self, text="完成", command=self.complete, width=button_width)
-        self.complete_all_btn.grid(row=2, column=5)
+        self.complete_all_btn.grid(row=3, column=5)
 
 
-        tk.Label(self, text="序号:").grid(row=3, column=0, ipadx=10, ipady=10)
-        tk.Label(self, text="图片:").grid(row=3, column=1, columnspan=2)
-        tk.Label(self, text="效果:").grid(row=3, column=3, columnspan=2)
-        tk.Label(self, text="合成:").grid(row=3, column=5, columnspan=2)
+        tk.Label(self, text="序号:").grid(row=4, column=0, ipadx=10, ipady=10)
+        tk.Label(self, text="图片:").grid(row=4, column=1, columnspan=2)
+        tk.Label(self, text="效果:").grid(row=4, column=3, columnspan=2)
+        tk.Label(self, text="合成:").grid(row=4, column=5, columnspan=2)
 
 
 
         self.myframe = Frame(self)
-        self.myframe.grid(row=4, columnspan=7, sticky=tk.NSEW)
+        self.myframe.grid(row=5, columnspan=7, sticky=tk.NSEW)
 
         self.canvas = Canvas(self.myframe, height=self.myframe.winfo_height())
         self.frame = Frame(self.canvas)
@@ -264,10 +279,14 @@ class AddData(Toplevel):
         #     return
 
         image_path = tk.filedialog.askopenfile(filetypes=[("Configuration file", "*.jpg")],
-                                                    initialdir=self.default_source).name
-        print(image_path)
+                                                    initialdir=self.default_source)
+
         if image_path is None:
             return
+
+        image_path = image_path.name
+
+        self.default_source = os.path.dirname(image_path)
 
         self.current_image_path = image_path
 
@@ -289,11 +308,12 @@ class AddData(Toplevel):
 
         effect_path = tk.filedialog.askopenfile(filetypes=[("Configuration file", "*.mp4")],
                                                initialdir=self.default_source)
-        if effect_path is not None:
-            effect_path = effect_path.name
-        else:
+        if effect_path is None:
             return
-        print(effect_path)
+
+        effect_path = effect_path.name
+        self.default_source = os.path.dirname(effect_path)
+
         if effect_path is None:
             msg.showinfo("警告", "请选择效果路径！")
             return
@@ -319,7 +339,7 @@ class AddData(Toplevel):
                 frame.winfo_children()[3]['text'] = effect_path
                 frame.winfo_children()[4]['text'] = '删除'
                 frame.winfo_children()[4]['command'] = lambda: self.delete(2, self.current_image_path, effect_path)
-                frame.winfo_children()[7]['text'] = '请选择效果ID'
+                frame.winfo_children()[7]['text'] = self.default_effect_btn['text']
                 frame.winfo_children()[7]['command'] = lambda: self.select_effect_ID(frame.winfo_children()[7])
                 add_flag = True
                 break
@@ -334,12 +354,14 @@ class AddData(Toplevel):
             return
 
         compose_path = tk.filedialog.askopenfile(filetypes=[("Configuration file", "*.jpg")],
-                                               initialdir=self.default_source).name
-        print(compose_path)
+                                               initialdir=self.default_source)
+
         if compose_path is None:
             msg.showinfo("警告", "请选择效果路径！")
             return
 
+        compose_path = compose_path.name
+        self.default_source = os.path.dirname(compose_path)
 
         tk_image = self.tk_image_collection.add_by_path(compose_path)
 
@@ -351,7 +373,7 @@ class AddData(Toplevel):
                 frame.winfo_children()[5]['text'] = compose_path
                 frame.winfo_children()[6]['text'] = '删除'
                 frame.winfo_children()[6]['command'] = lambda: self.delete(3, self.current_image_path, compose_path)
-                frame.winfo_children()[8]['text'] = '请选择合成ID'
+                frame.winfo_children()[8]['text'] = self.default_compose_btn['text']
                 frame.winfo_children()[8]['command'] = lambda: self.select_compose_ID(frame.winfo_children()[8], compose_path)
                 add_flag = True
                 break
@@ -407,8 +429,9 @@ class AddData(Toplevel):
         list_box_dialog = ListBoxClass(items, "请选择效果名称")
         self.wait_window(list_box_dialog)  # 这一句很重要！！
         print(list_box_dialog.list_box_select_index)
-        effect_name = items[list_box_dialog.list_box_select_index[0]]
-        ui['text'] = effect_name
+        if list_box_dialog.list_box_select_index is not None:
+            effect_name = items[list_box_dialog.list_box_select_index[0]]
+            ui['text'] = effect_name
 
     def select_compose_ID(self, ui, select_path):
         path_dicts = self.dy_data_utils.get_compose_ids_pathes()
@@ -418,6 +441,25 @@ class AddData(Toplevel):
         self.wait_window(list_image_dialog)  # 这一句很重要！！
         if list_image_dialog.select_name is not None:
             ui['text'] = list_image_dialog.select_name
+
+    def select_default_effect_ID(self):
+        ListBoxClass = create_list_box_selector(tk.Toplevel)
+        items = self.dy_data_utils.effects_ids
+        print(items)
+        list_box_dialog = ListBoxClass(items, "请选择效果名称")
+        self.wait_window(list_box_dialog)  # 这一句很重要！！
+        print(list_box_dialog.list_box_select_index)
+        if list_box_dialog.list_box_select_index is not None:
+            self.default_effect_btn['text'] = items[list_box_dialog.list_box_select_index[0]]
+
+    def select_default_compose_ID(self):
+        path_dicts = self.dy_data_utils.get_compose_ids_pathes()
+        print(path_dicts)
+        list_image_dialog = ListImageSelector(other_image_dict=path_dicts)
+
+        self.wait_window(list_image_dialog)  # 这一句很重要！！
+        if list_image_dialog.select_name is not None:
+            self.default_compose_btn['text'] = list_image_dialog.select_name
 
     def check_data(self):
         for path, frame_list in self.path_tk_frame_dict.items():
@@ -447,24 +489,25 @@ class AddData(Toplevel):
             image_md5 = md5(path)
             count = frame_list[0].winfo_children()[0]['text']
             save_name = f"{group_num}_{count}_{image_md5}"
-            # shutil.copy(path, os.path.join(self.dy_data_utils.get_image_dir(), str(type), f"{save_name}.jpg"))
-            print(path, os.path.join(self.dy_data_utils.image_dir(), str(export_type), f"{save_name}.jpg"))
+            shutil.copy(path, os.path.join(self.dy_data_utils.image_dir, str(export_type), f"{save_name}.jpg"))
 
             for frame in frame_list:
                 #拷贝效果
                 if frame.winfo_children()[4]['text'] != "":
                     effect_path = frame.winfo_children()[3]['text']
                     effect_id = frame.winfo_children()[7]['text']
-                    # shutil.copy(str(effect_path), os.path.join(self.dy_data_utils.get_effects_dir(), effect_id, f"{save_name}.mp4"))
-                    print(str(effect_path), os.path.join(self.dy_data_utils.effects_dir(), effect_id, f"{save_name}.mp4"))
+                    shutil.copy(str(effect_path), os.path.join(self.dy_data_utils.effects_dir, effect_id, f"{save_name}.mp4"))
 
                 #拷贝合成
                 if frame.winfo_children()[6]['text'] != "":
                     compose_path = frame.winfo_children()[5]['text']
                     compose_id = frame.winfo_children()[8]['text']
-                    # shutil.copy(str(compose_path), os.path.join(self.dy_data_utils.get_compose_dir(), compose_id, f"{save_name}.jpg"))
-                    print(str(compose_path), os.path.join(self.dy_data_utils.compose_dir(), compose_id, f"{save_name}.jpg"))
+                    shutil.copy(str(compose_path), os.path.join(self.dy_data_utils.compose_dir, compose_id, f"{save_name}.jpg"))
 
+            os.remove(path)
+            os.remove(str(effect_path))
+            os.remove(str(compose_path))
+        self.destroy()
 if __name__ == "__main__":
     analyse = AddData()
     analyse.mainloop()
