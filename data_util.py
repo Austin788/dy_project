@@ -99,6 +99,18 @@ def md5(file_path):
     return res1
 
 
+class InfiniteIterator():
+    def __init__(self, iter_container):
+        self.iter_container = iter_container
+        self.index = -1
+
+    def next(self):
+        self.index += 1
+        if self.index >= len(self.iter_container):
+            self.index = 0
+        return self.iter_container[self.index]
+
+
 if __name__ == "__main__":
     data_root = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data"
     data_utils = DYDataUtils(data_root)

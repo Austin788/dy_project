@@ -5,6 +5,8 @@ from gui_util import *
 from data_util import *
 from tkinter import messagebox as msg
 import itertools
+from generate_video import generate_single_video
+from wcmatch import pathlib
 
 class ComposeVideo(Toplevel):
     def __init__(self, master=None):
@@ -43,6 +45,10 @@ class ComposeVideo(Toplevel):
         tk.Label(self, text="导出视频数:").grid(row=0, column=4, padx=10, pady=10)
         tk.Entry(self, textvariable=self.export_video_num, width=5).grid(row=0, column=5)
 
+        self.skip_export_exists = tk.IntVar(value=1)
+        tk.Checkbutton(self, text="已经存在不导出", variable=self.skip_export_exists, onvalue=1,
+                                                offvalue=0, width=button_width).grid(row=0, column=6)
+
         self.export_btn = tk.Button(self, text="导出", command=self.export, width=button_width)
         self.export_btn.grid(row=0, column=8, pady=10)
 
@@ -79,6 +85,7 @@ class ComposeVideo(Toplevel):
         self.effect_list_box = tk.Listbox(self, cursor='arrow', selectborderwidth=2, listvariable=self.effects_items, selectmode=MULTIPLE, width=10)
         self.effect_list_box.grid(row=4, column=6, sticky=NSEW, padx=10)
         self.effect_list_box.configure(exportselection=False)
+        self.effect_list_box.select_set(0, END)
 
         # 合成列表
         self.compose_list = ListImageManager(self)
@@ -137,15 +144,27 @@ class ComposeVideo(Toplevel):
             self.image_list.add_by_path(str(path.name))
 
     def get_select_music_list(self):
-        music_list = self.music_list_box.get(0, END)
-        if music_list is None:
-            music_list = ['None']
-        return list(music_list)
+        music_list = list(self.music_list_box.get(0, END))
+        if music_list is None or len(music_list) == 0:
+            msg.showerror("警告", "请选择音乐文件")
+            return []
+
+        for i in range(len(music_list)):
+            music_list[i] = os.path.join(self.dy_data_utils.music_dir, music_list[i])
+
+        return music_list
+
+    def get_select_device_list(self):
+        device_list = self.device_list_box.get(0, END)
+        if device_list is None or len(device_list) == 0:
+            msg.showerror("警告", "请至少选择一个导出设备")
+            return []
+        return list(device_list)
 
     def get_select_video_list(self):
         video_list = self.video_list.image_list
         if len(video_list) == 0:
-            video_list= ['None']
+            video_list = ['None']
         return video_list
 
     def get_select_image_list(self):
@@ -155,7 +174,7 @@ class ComposeVideo(Toplevel):
             return
         image_list = self.image_list.image_list
 
-        if len(image_list) > 0:
+        if len(image_list) >= 3:
             image_list.sort()
 
             if self.exchange_checkbtn_num.get() == 1:
@@ -163,7 +182,8 @@ class ComposeVideo(Toplevel):
             else:
                 image_list = list(itertools.combinations(image_list, img_num_per_video))  # 有序
         else:
-            image_list = ['None']
+            msg.showerror("警告", "请至少选择三张图片")
+            return []
 
         return image_list
 
@@ -172,38 +192,62 @@ class ComposeVideo(Toplevel):
         effect_names = []
         for index in selects:
             effect_names.append(self.effect_list_box.get(index))
-        if len(effect_names) == 0:
-            effect_names = ['None']
         return effect_names
 
 
     def get_select_compose_list(self):
         compose_list = self.compose_list.image_list
-        if len(compose_list)  == 0:
+        if len(compose_list) == 0:
             compose_list = ['None']
         return compose_list
 
-    def export(self):
-        # devices_index = self.device_list_box.curselection()
-        # devices = []
-        # if len(devices_index) == 0:
-        #     msg.showinfo("警告", "请先选择要导出的设备！")
-        #     return
-        # else:
-        #     for index in devices_index:
-        #         devices.append(self.device_list_box.get(index))
+    def convert_pathes(self, image_pathes, resouce_path, suffix=None):
+        pathes = []
+        for img_path in image_pathes:
+            if suffix is None:
+                path = os.path.join(resouce_path, os.path.basename(img_path))
+            else:
+                filename = os.path.basename(img_path)
+                path = os.path.join(resouce_path, filename[:-4] + suffix)
+            if not os.path.exists(path):
+                print(f"not exists {path}")
+                continue
+            pathes.append(path)
+        return pathes
 
+    def get_export_resource_list(self, order_list=["video", 'image', 'effect', 'compose', 'music']):
         music_list = self.get_select_music_list()
+        if len(music_list) == 0:
+            return []
+
         video_list = self.get_select_video_list()
+
         image_list = self.get_select_image_list()
+        if len(image_list) < 3:
+            return []
+
         effect_list = self.get_select_effect_list()
+        if len(effect_list) <= 0:
+            return []
+
         compose_list = self.get_select_compose_list()
 
-        resource_dict = {'music':music_list, 'video':video_list, 'image':image_list, 'effect':effect_list, 'compose':compose_list}
+        print(music_list)
+        print(video_list)
+        print(image_list)
+        print(effect_list)
+        print(compose_list)
 
-        order_list = ["video", 'image', 'effect', 'compose', 'music']
+        resource_dict = {'music': music_list, 'video': video_list, 'image': image_list, 'effect': effect_list,
+                         'compose': compose_list}
+
+
         order_list.reverse()
 
+        videoname_sets = self.get_all_video_set()
+
+        export_paramter_list = []
+        skip_exist_flag = self.skip_export_exists.get()
         for item0 in resource_dict[order_list[0]]:
             for item1 in resource_dict[order_list[1]]:
                 for item2 in resource_dict[order_list[2]]:
@@ -216,16 +260,118 @@ class ComposeVideo(Toplevel):
                             paramter[order_list[3]] = item3
                             paramter[order_list[4]] = item4
 
-                            print(paramter)
+                            # effect名称转路径
+                            effect_name = paramter['effect']
+                            effect_pathes = self.convert_pathes(paramter['image'],
+                                                os.path.join(self.dy_data_utils.effects_dir, effect_name), suffix=".mp4")
+                            if len(effect_pathes) != len(paramter['image']):
+                                print(f"effect length not equal")
+                                continue
+                            paramter['effect'] = effect_pathes
 
-        # resouce_index = [0] * len(order_list)
-        # for type in order_list:
-        #
-        # print(music_list)
-        # print(video_list)
-        # print(image_list)
-        # print(effect_list)
-        # print(compose_list)
+                            # compose名称转路径
+                            compose_name = os.path.basename(os.path.dirname(paramter['compose']))
+                            compose_pathes = self.convert_pathes(paramter['image'], os.path.join(self.dy_data_utils.compose_dir, compose_name))
+                            if len(compose_pathes) != len(paramter['image']):
+                                print(f"compose_pathes length not equal")
+                                continue
+                            paramter['compose'] = compose_pathes
+
+                            video_save_name = self.sluify(paramter) + ".mp4"
+
+                            if skip_exist_flag == 1 and video_save_name in videoname_sets:
+                                continue
+
+                            paramter['video_save_name'] = video_save_name
+                            export_paramter_list.append(paramter)
+        print(len(export_paramter_list))
+        return export_paramter_list
+
+    def sluify(self, paramter):
+        music_name = ""
+        if os.path.exists(paramter['music']):
+            music_name = os.path.basename(paramter['music'])
+            music_name = music_name[0:15]
+
+        video_name = ""
+        if os.path.exists(paramter['video']):
+            video_name = os.path.basename(paramter['video'])
+            video_name = video_name[0:15]
+
+        image_name = ""
+        for img_path in paramter['image']:
+            image_name += os.path.basename(img_path).split("_")[2][:10]
+        image_name = image_name[:40]
+
+        effect_name = ""
+        if os.path.exists(paramter['effect'][0]):
+            effect_name = os.path.basename(os.path.dirname(paramter['effect'][0]))
+            effect_name = effect_name[0:15]
+
+        compose_name = ""
+        if os.path.exists(paramter['compose'][0]):
+            compose_name = os.path.basename(os.path.dirname(paramter['compose'][0]))
+            compose_name = compose_name[0:15]
+
+        return f"{music_name}_{video_name}_{image_name}_{effect_name}_{compose_name}"
+
+    def get_all_video_set(self):
+        video_set = set()
+        for dir_path, _, filenames in os.walk(self.dy_data_utils.device_dir):
+            for filename in filenames:
+                if filename.endswith(".mp4"):
+                    video_set.add(filename)
+        return video_set
+
+    def paramter_convert(self, paramter):
+        new_paramter = {}
+        new_paramter['music_path'] = paramter['music']
+        new_paramter['stuck_points'] = paramter['music'][:-4] + ".txt"
+        new_paramter['video_path'] = paramter['video']
+        new_paramter['image_paths'] = list(paramter['image'])
+        new_paramter['effect_paths'] = paramter['effect']
+        new_paramter['compose_paths'] = paramter['compose']
+        new_paramter['save_path'] = os.path.join(self.dy_data_utils.device_dir, paramter['device_name'], '待发送', paramter['video_save_name'])
+        return new_paramter
+
+    def export(self):
+        # devices_index = self.device_list_box.curselection()
+        # devices = []
+        # if len(devices_index) == 0:
+        #     msg.showinfo("警告", "请先选择要导出的设备！")
+        #     return
+        # else:
+        #     for index in devices_index:
+        #         devices.append(self.device_list_box.get(index))
+
+        export_video_num = self.export_video_num.get()
+
+        export_paramter_list = self.get_export_resource_list()
+
+        if len(export_paramter_list) == 0:
+            return
+
+
+        answer = msg.askquestion(title='提示',
+                                 message=f"预计可以生成{min(len(export_paramter_list), export_video_num)}个视频，是否继续！")
+        if answer != msg.YES:
+            return
+
+        export_device_list = self.get_select_device_list()
+        if len(export_device_list) <= 0:
+            return
+
+        export_list_iter = InfiniteIterator(export_device_list)
+
+
+
+        for paramter in export_paramter_list:
+            paramter["device_name"] = export_list_iter.next()
+            fun_paramter = self.paramter_convert(paramter)
+            print(fun_paramter)
+            # generate_single_video(**fun_paramter)
+
+            # 拷贝图片到未上传
 
 
 if __name__ == "__main__":
