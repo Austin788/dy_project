@@ -5,6 +5,7 @@ from gui_util import *
 from data_util import *
 from tkinter import messagebox as msg
 import itertools
+import shutil
 from generate_video import generate_single_video
 from wcmatch import pathlib
 
@@ -155,7 +156,11 @@ class ComposeVideo(Toplevel):
         return music_list
 
     def get_select_device_list(self):
-        device_list = self.device_list_box.get(0, END)
+        select_indexes = self.device_list_box.curselection()
+        device_list = []
+        for index in select_indexes:
+            device_list.append(self.device_list_box.get(index))
+
         if device_list is None or len(device_list) == 0:
             msg.showerror("警告", "请至少选择一个导出设备")
             return []
@@ -363,7 +368,7 @@ class ComposeVideo(Toplevel):
 
         export_list_iter = InfiniteIterator(export_device_list)
 
-
+        upload_config = UploadConfig()
 
         for paramter in export_paramter_list:
             paramter["device_name"] = export_list_iter.next()
@@ -372,6 +377,25 @@ class ComposeVideo(Toplevel):
             # generate_single_video(**fun_paramter)
 
             # 拷贝图片到未上传
+            upload_folder_name = upload_config.get_upload(paramter["device_name"])
+            if upload_folder_name is None:
+                msg.showerror("警告", f"设备:{paramter['device_name']} 未定义取图账号！")
+                return
+
+            offline_folder_path = os.path.join(self.dy_data_utils.upload_dir, upload_folder_name, "未上传")
+            if not os.path.exists(offline_folder_path):
+                os.makedirs(offline_folder_path)
+
+            online_folder_path = os.path.join(self.dy_data_utils.upload_dir, upload_folder_name, "已上传")
+            if not os.path.exists(online_folder_path):
+                os.makedirs(online_folder_path)
+
+            upload_exists_filenames = list(os.listdir(online_folder_path)) + \
+                                      list(os.listdir(offline_folder_path))
+
+            for image_path in paramter['image']:
+                if os.path.basename(image_path) not in upload_exists_filenames:
+                    shutil.copy(image_path, os.path.join(offline_folder_path, os.path.basename(image_path)))
 
 
 if __name__ == "__main__":

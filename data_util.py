@@ -1,5 +1,6 @@
 import os
 import hashlib
+import yaml
 
 class DYDataUtils():
     def __init__(self, data_root):
@@ -8,6 +9,10 @@ class DYDataUtils():
     @property
     def image_dir(self):
         return os.path.join(self.data_root, "image")
+
+    @property
+    def upload_dir(self):
+        return os.path.join(self.data_root, "upload_images")
 
     @property
     def effects_dir(self):
@@ -109,6 +114,17 @@ class InfiniteIterator():
         if self.index >= len(self.iter_container):
             self.index = 0
         return self.iter_container[self.index]
+
+class UploadConfig():
+    def __init__(self):
+        self.data = yaml.load(open("config.yml", mode='r', encoding='utf-8'))
+
+    def get_upload(self, device_name):
+        upload_config = self.data["upload_config"]
+        for key, value in upload_config.items():
+            if device_name in value:
+                return key
+        return None
 
 
 if __name__ == "__main__":
