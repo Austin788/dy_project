@@ -46,7 +46,6 @@ class AddMusic(Toplevel):
         self.main_frame.pack(fill=tk.BOTH, expand=1)
         self.dy_data_utils = DYDataUtils()
 
-
     def add_stuck_points_label(self):
 
         tk.Label(self.main_frame, text=f"卡点{self.stuck_points_label_begein_row-2}:").grid(row=self.stuck_points_label_begein_row, column=0)
@@ -64,7 +63,7 @@ class AddMusic(Toplevel):
         self.save_path.set(save_path)
 
     def select_source_path(self):
-        source_path = tk.filedialog.askopenfile(filetypes=[("Configuration file", "*.mp4")], initialdir=self.default_source)
+        source_path = tk.filedialog.askopenfile(filetypes=[("Configuration file", ["*.mp4", "*.mp3"])], initialdir=self.default_source)
         print(source_path)
         if source_path is None:
             return
@@ -78,11 +77,11 @@ class AddMusic(Toplevel):
             if valiable is not None and len(valiable) > 0:
                 stuck_points.append(valiable)
 
-
-        video = VideoFileClip(self.source_path.get())
-        audio = video.audio
-        save_music_path = os.path.join(self.dy_data_utils.music_dir, self.music_name.get())
-        audio.write_audiofile(save_music_path)
+        if not os.path.samefile(self.dy_data_utils.music_dir, os.path.dirname(self.source_path.get())):
+            video = VideoFileClip(self.source_path.get())
+            audio = video.audio
+            save_music_path = os.path.join(self.dy_data_utils.music_dir, self.music_name.get())
+            audio.write_audiofile(save_music_path)
 
         if len(stuck_points) > 0:
             for i in range(len(stuck_points)):
@@ -113,12 +112,8 @@ class AddMusic(Toplevel):
                 data["stuck_points"][len(stuck_points)] = stuck_points
                 json.dump(data, f, indent=4, ensure_ascii=False)
 
-
         msg.showinfo("状态", f"保存成功")
         self.destroy()
-
-
-
 
 
 if __name__ == "__main__":
