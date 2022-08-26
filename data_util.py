@@ -3,7 +3,7 @@ import hashlib
 import yaml
 
 class DYDataUtils():
-    def __init__(self, data_root):
+    def __init__(self, data_root=os.path.join(os.path.dirname(__file__), "data")):
         self.data_root = data_root
 
     @property
