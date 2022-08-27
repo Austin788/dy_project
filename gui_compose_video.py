@@ -373,8 +373,7 @@ class ComposeVideo(Toplevel):
         for paramter in export_paramter_list:
             paramter["device_name"] = export_list_iter.next()
             fun_paramter = self.paramter_convert(paramter)
-            print(fun_paramter)
-            # generate_single_video(**fun_paramter)
+            generate_single_video(fun_paramter)
 
             # 拷贝图片到未上传
             upload_folder_name = upload_config.get_upload(paramter["device_name"])
