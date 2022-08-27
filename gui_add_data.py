@@ -464,20 +464,23 @@ class AddData(Toplevel):
     def check_data(self):
         for path, frame_list in self.path_tk_frame_dict.items():
             for frame in frame_list:
-                if frame.winfo_children()[4]['text'] != "" and str(frame.winfo_children()[7]['text']).startswith("请"):
+                if frame.winfo_children()[4]['text'] != "" and str(frame.winfo_children()[7]['text']).startswith("选择"):
                     msg.showerror("警告", "还有效果ID没有选择")
-                    return
+                    return False
 
-                if frame.winfo_children()[6]['text'] != "" and str(frame.winfo_children()[8]['text']).startswith("请"):
+                if frame.winfo_children()[6]['text'] != "" and str(frame.winfo_children()[8]['text']).startswith("选择"):
                     msg.showerror("警告", "还有合成ID没有选择")
-                    return
+                    return False
+        return True
 
     def complete_current(self):
         self.add_image_btn['state'] = NORMAL
         self.image_num = self.image_num + 1
 
     def complete(self):
-        self.check_data()
+        flag = self.check_data()
+        if not flag:
+            return
 
         export_type = self.export_type_value.get()
         if len(export_type) == 0:
@@ -486,10 +489,19 @@ class AddData(Toplevel):
 
         group_num = self.dy_data_utils.get_avilable_group_num(export_type)
         for path, frame_list in self.path_tk_frame_dict.items():
-            image_md5 = md5(path)
-            count = frame_list[0].winfo_children()[0]['text']
-            save_name = f"{group_num}_{count}_{image_md5}"
-            shutil.copy(path, os.path.join(self.dy_data_utils.image_dir, str(export_type), f"{save_name}.jpg"))
+            if os.path.samefile(self.dy_data_utils.image_dir, os.path.dirname(path)):
+                copy_image_flag = False
+            else:
+                copy_image_flag = True
+
+            if copy_image_flag:
+                image_md5 = md5(path)
+                count = frame_list[0].winfo_children()[0]['text']
+                save_name = f"{group_num}_{count}_{image_md5}"
+                shutil.copy(path, os.path.join(self.dy_data_utils.image_dir, str(export_type), f"{save_name}.jpg"))
+            else:
+                save_name = os.path.basename(path)
+                save_name = save_name[:-4]
 
             for frame in frame_list:
                 #拷贝效果
@@ -504,9 +516,12 @@ class AddData(Toplevel):
                     compose_id = frame.winfo_children()[8]['text']
                     shutil.copy(str(compose_path), os.path.join(self.dy_data_utils.compose_dir, compose_id, f"{save_name}.jpg"))
 
-            os.remove(path)
+            if copy_image_flag:
+                os.remove(path)
+
             os.remove(str(effect_path))
             os.remove(str(compose_path))
+        msg.showinfo("状态", "添加成功！")
         self.destroy()
 if __name__ == "__main__":
     analyse = AddData()
