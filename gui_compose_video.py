@@ -331,7 +331,7 @@ class ComposeVideo(Toplevel):
     def paramter_convert(self, paramter):
         new_paramter = {}
         new_paramter['music_path'] = paramter['music']
-        new_paramter['stuck_points'] = paramter['music'][:-4] + ".txt"
+        new_paramter['stuck_points'] = paramter['music'][:-4] + ".json"
         new_paramter['video_path'] = paramter['video']
         new_paramter['image_paths'] = list(paramter['image'])
         new_paramter['effect_paths'] = paramter['effect']
@@ -395,6 +395,9 @@ class ComposeVideo(Toplevel):
             for image_path in paramter['image']:
                 if os.path.basename(image_path) not in upload_exists_filenames:
                     shutil.copy(image_path, os.path.join(offline_folder_path, os.path.basename(image_path)))
+
+        msg.showinfo("提示", "视频生成成功！")
+        self.destroy()
 
 
 if __name__ == "__main__":

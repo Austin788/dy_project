@@ -24,7 +24,7 @@ def generate_single_video(info:dict):
     # video_background_color = video_properties['video_background_color']
 
 
-    video_size = [1080, 1920] # （宽、高）
+    video_size = (1080, 1920) # （宽、高）
     video_fps = 30
     video_encoding = cv2.VideoWriter_fourcc(*'XVID')
     video_background_color = (0, 0, 0)
