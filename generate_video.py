@@ -1,86 +1,34 @@
-import os
 import numpy as np
-import time
 import math
 import cv2
 import random
 import shutil
 from PIL import Image, ImageDraw, ImageFont
 from moviepy.editor import *
+import json
+import sys
 
 
-##### 管理数据界面 #####
-# 地址格式：目标目录/[男头、女头]/[数据类型]/[日期]/文件类型_id.后缀
-DATA_DIR = ''
-DATA_TYPE = {
-    1: 'image_render_synthetise',
-    2: 'image_synthetise',
-    3: 'image_render',
-    4: 'image'
-}
-PROFILE_TYPE = {
-    1: 'female',
-    2: 'male'
-}
-VIDEO_TYPE = {
-    1: 'use_begin_video',
-    2: 'no_begin_video'
-}
+def generate_single_video(info:dict):
+    music_path = info['music_path']
+    stuck_points_path = info['stuck_points']
+    video_path = info['video_path']
+    image_paths = info['image_paths']
+    effect_paths = info['effect_paths']
+    compose_paths = info['compose_paths']
+    save_path = info['save_path']
 
-def manage_data(data_type, profile_type, image_list, render_list, synthetise_list):
-    data_list = list()
-    if data_type == 1:
-        if len(image_list) == len(render_list) and len(image_list) == len(synthetise_list) and len(image_list) > 0:
-            data_list = [image_list, render_list, synthetise_list]
-        else:
-            raise ValueError("data error!")
-    elif data_type == 2:
-        if len(image_list) == len(synthetise_list) and len(image_list) > 0:
-            data_list = [image_list, synthetise_list]
-        else:
-            raise ValueError("data error!")
-    elif data_type == 3:
-        if len(image_list) == len(render_list) and len(image_list) > 0:
-            data_list = [image_list, render_list]
-        else:
-            raise ValueError("data error!")
-    else:
-        if len(image_list) > 0:
-            data_list = [image_list]
-        else:
-            raise ValueError("data error!")
-
-    target_dir = os.path.join(DATA_DIR, PROFILE_TYPE[profile_type], DATA_TYPE[data_type], time.strftime('%Y-%m-%d', time.localtime()))
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-
-    for i, path_list in enumerate(data_list):
-        file_name_prefixs = DATA_TYPE[data_type].split('_')
-        for id, file_path in enumerate(path_list):
-            file_dst_path = os.path.join(target_dir, file_name_prefixs[i]+'_'+str(id)+'.'+file_path.split('.')[-1])
-            shutil.copyfile(file_path, file_dst_path)
+    # video_size = video_properties['video_size']  # （宽、高）
+    # video_fps = video_properties['video_fps']
+    # video_encoding = video_properties['video_encoding']
+    # video_background_color = video_properties['video_background_color']
 
 
-def main(music_path, stuck_points, title_content, text_font_path, text_color, video_path, image_paths, video_properties,
-         save_path, video_type, generate_num):
-    if video_type == 2:
-        # 卡点时间列开头加个0
-        stuck_points.insert(0, 0)
-
-    for id in range(generate_num):
-        random.shuffle(image_paths)
-        save_path = set_save_path(save_path, music_path, video_path, image_paths, id)
-        generate_single_video(music_path, stuck_points, title_content, text_font_path, text_color, video_path,
-                              image_paths, video_properties, save_path)
-
-
-def generate_single_video(music_path, stuck_points, title_content, text_font_path, text_color, video_path, image_paths,
-                          video_properties, save_path):
-    video_size = video_properties['video_size'] # （宽、高）
-    video_fps = video_properties['video_fps']
-    video_encoding = video_properties['video_encoding']
-    video_background_color = video_properties['video_background_color']
-    video_frames_num = int(stuck_points[-1] * video_fps) # 总帧数
+    video_size = (1080, 1920) # （宽、高）
+    video_fps = 30
+    video_encoding = cv2.VideoWriter_fourcc(*'XVID')
+    video_background_color = (0, 0, 0)
+    stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths)*2 + 1)
 
     # 设置统一的背景图片
     background_image = np.zeros((video_size[1], video_size[0], 3))
@@ -91,6 +39,10 @@ def generate_single_video(music_path, stuck_points, title_content, text_font_pat
     video_out = cv2.VideoWriter(save_path, video_encoding, video_fps, video_size)
 
     # part one
+    # 无开头素材视频
+    if video_path == '':
+        stuck_points.insert(0, 0)
+
     part_one_duration = stuck_points[0]
     part_one_frames_num = int(part_one_duration * video_fps)
     part_one_frames = read_video(video_path)
@@ -103,21 +55,19 @@ def generate_single_video(music_path, stuck_points, title_content, text_font_pat
     part_one_frames = part_one_frames[frames_start_id:frames_start_id+part_one_frames_num]
     for frame in part_one_frames:
         frame_out = adjust_frame(background_image.copy(), frame)
-        frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
-        video_out.write(frame_out)
+        # frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
+        video_out.write(np.uint8(frame_out))
 
     # part two
-    # image_order = random.sample(range(len(image_paths)), len(image_paths))
-    image_order = range(len(image_paths))
-    for part_id, image_id in enumerate(image_order):
+    for image_id in range(len(image_paths)):
         source_image_path = image_paths[image_id]
-        render_video_path = image_paths[image_id]
-        show_image_path = image_paths[image_id]
+        effect_video_path = effect_paths[image_id]
+        compose_image_path = compose_paths[image_id]
 
         # part two-1
-        part_two_duration_1 = stuck_points[part_id * 2 + 1] - stuck_points[part_id * 2]
+        part_two_duration_1 = stuck_points[image_id * 2 + 1] - stuck_points[image_id * 2]
         part_two_frame_num_1 = int(part_two_duration_1 * video_fps)
-        part_two_frames_1 = read_video(render_video_path)
+        part_two_frames_1 = read_video(effect_video_path)
         # 视频太短进行插针处理
         if len(part_two_frames_1) < part_two_frame_num_1:
             part_two_frames_1 = video_frame_interpolation(part_two_frames_1, part_two_frame_num_1)
@@ -125,20 +75,39 @@ def generate_single_video(music_path, stuck_points, title_content, text_font_pat
         part_two_frames_1 = part_two_frames_1[frames_start_id:frames_start_id + part_two_frame_num_1]
         for frame in part_two_frames_1:
             frame_out = adjust_frame(background_image.copy(), frame)
-            video_out.write(frame_out)
+            video_out.write(np.uint8(frame_out))
 
         # part two-2
-        part_two_duration_2 = stuck_points[part_id * 2 + 2] - stuck_points[part_id * 2 + 1]
+        part_two_duration_2 = stuck_points[image_id * 2 + 2] - stuck_points[image_id * 2 + 1]
         part_two_frame_num_2 = int(part_two_duration_2 * video_fps)
-        frame = cv2.imread(show_image_path)
+        frame = cv2.imread(compose_image_path)
         frame_out = adjust_frame(background_image.copy(), frame)
         for i in range(part_two_frame_num_2):
-            video_out.write(frame_out)
+            video_out.write(np.uint8(frame_out))
 
     video_out.release()
-    add_music(save_path, music_path)
+    add_music_to_video(save_path, music_path)
 
     print('video complete!')
+
+
+def read_stuck_points(stuck_points_path, points_num):
+    with open(stuck_points_path) as f:
+        stuck_points_info = json.load(f)
+
+    nearest_list = None
+    if "stuck_points" in stuck_points_info:
+        if str(points_num) in stuck_points_info['stuck_points']:
+            return stuck_points_info['stuck_points'][str(points_num)]
+        else:
+            nearest_num = sys.maxsize
+            for key, value in stuck_points_info['stuck_points'].items():
+                if int(key) > points_num and int(key) < nearest_num:
+                    nearest_num = key
+                    nearest_list = value
+            return nearest_list
+
+    return nearest_list
 
 
 def set_save_path(save_path, music_path, video_path, image_paths, id):
@@ -151,10 +120,15 @@ def set_save_path(save_path, music_path, video_path, image_paths, id):
     return save_path
 
 
-def add_music(video_path, music_path):
-    video = VideoFileClip(video_path)
-    videos = video.set_audio(AudioFileClip(music_path))  # 音频文件
-    videos.write_videofile(video_path)
+# 输出不能覆盖原地址，可能导致画面卡住
+def add_music_to_video(video_path, music_path):
+    my_clip = VideoFileClip(video_path)
+    audio_background = AudioFileClip(music_path)
+    final_clip = my_clip.set_audio(audio_background)
+    tmp_path = os.path.join(os.path.abspath("."), 'tmp.mp4')
+    final_clip.write_videofile(tmp_path, audio_codec='aac')
+    shutil.copyfile(tmp_path, video_path)
+    os.remove(tmp_path)
 
 
 def add_title_text(image, title_content, text_font_path, text_color):
@@ -211,7 +185,48 @@ def video_frame_interpolation(video_frames, expect_frames_num):
 
 
 if __name__ == '__main__':
-    main()
+    stuck_points = read_stuck_points("/Users/meitu/Documents/midlife_crisis/project/dy_project/data/music/@博博越野(不磕博) 创作的原声-博博越野(不磕博).json", 7)
+    print(stuck_points)
+    exit(0)
+    # 是否要默认断点最后一个值是否等于mp3长度
+    info_begin = {
+        'music_path': 'test/1.mp3',
+        'stuck_points': 'test/1.txt',
+        'video_path': 'test/1.mp4',
+        'image_paths':
+            ['test/1-1.jpg',
+             'test/2-1.jpg',
+             'test/3-1.jpg'],
+        'effect_paths':
+            ['test/1-2.mp4',
+             'test/2-2.mp4',
+             'test/3-2.mp4'],
+        'compose_paths':
+            ['test/1-1.jpg',
+             'test/2-1.jpg',
+             'test/3-1.jpg'],
+        'save_path': 'test/result-1.mp4'
+        }
+    info_no_begin = {
+        'music_path': 'test/1.mp3',
+        'stuck_points': 'test/2.txt',
+        'video_path': '',
+        'image_paths':
+            ['test/1-1.jpg',
+             'test/2-1.jpg',
+             'test/3-1.jpg'],
+        'effect_paths':
+            ['test/1-2.mp4',
+             'test/2-2.mp4',
+             'test/3-2.mp4'],
+        'compose_paths':
+            ['test/1-1.jpg',
+             'test/2-1.jpg',
+             'test/3-1.jpg'],
+        'save_path': 'test/result-2.mp4'
+    }
+    generate_single_video(info_begin)
+    generate_single_video(info_no_begin)
 
 
 

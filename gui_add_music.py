@@ -77,10 +77,11 @@ class AddMusic(Toplevel):
             if valiable is not None and len(valiable) > 0:
                 stuck_points.append(valiable)
 
+        save_music_path = os.path.join(self.dy_data_utils.music_dir, self.music_name.get())
+
         if not os.path.samefile(self.dy_data_utils.music_dir, os.path.dirname(self.source_path.get())):
             video = VideoFileClip(self.source_path.get())
             audio = video.audio
-            save_music_path = os.path.join(self.dy_data_utils.music_dir, self.music_name.get())
             audio.write_audiofile(save_music_path)
 
         if len(stuck_points) > 0:
@@ -109,7 +110,7 @@ class AddMusic(Toplevel):
             with open(save_json_path, "w") as f:
                 if "stuck_points" not in data:
                     data["stuck_points"] = {}
-                data["stuck_points"][len(stuck_points)] = stuck_points
+                data["stuck_points"][str(len(stuck_points))] = stuck_points
                 json.dump(data, f, indent=4, ensure_ascii=False)
 
         msg.showinfo("状态", f"保存成功")
