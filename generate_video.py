@@ -28,7 +28,14 @@ def generate_single_video(info:dict):
     video_fps = 30
     video_encoding = cv2.VideoWriter_fourcc(*'XVID')
     video_background_color = (0, 0, 0)
-    stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths)*2 + 1)
+
+    if os.path.exists(video_path):
+        stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths) * 2 + 1)
+    else:
+        stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths) * 2)
+        stuck_points = [0] + stuck_points
+
+
 
     # 设置统一的背景图片
     background_image = np.zeros((video_size[1], video_size[0], 3))

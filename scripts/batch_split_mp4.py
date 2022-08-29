@@ -15,9 +15,12 @@ def cmp(x, y):
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/image/男生头像"
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/image/职业头像"
     save_dir = "/Users/meitu/Downloads/video_save"
-    video_path = "/Users/meitu/Downloads/E91B8EB1-17D0-4FD5-B3AE-3DC540872D80.MOV"
+    video_path = "/Users/meitu/Downloads/E0D49A83-8DA0-4833-98A0-AFD77642C84F.MOV"
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     video_size = [1080, 1920]  # （宽、高）
     video_fps = 30
@@ -27,7 +30,7 @@ if __name__ == "__main__":
     filenames = os.listdir(image_dir)
     filenames.remove(".DS_Store")
     filenames.sort(key=functools.cmp_to_key(cmp), reverse=True)
-    filenames = filenames[14:]
+    filenames = filenames[36:]
     # print(filenames)
     # exit(0)
 
