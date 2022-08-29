@@ -1,6 +1,7 @@
 import tkinter as tk
 from gui_add_data import AddData
 from gui_add_music import AddMusic
+from gui_compose_video import ComposeVideo
 
 from tkinter import *
 from tkinter.ttk import *
@@ -34,7 +35,7 @@ class MainGUI(tk.Tk):
 
         self.rename_comment_btn = tk.Button(self.main_frame, text="合成视频(视频+图片+合成模式)", width=bt_width, height=bt_height)
         self.rename_comment_btn.pack(expand=True)
-        self.rename_comment_btn.bind("<Button>", lambda e: AddData(self))
+        self.rename_comment_btn.bind("<Button>", lambda e: ComposeVideo(self))
 
         self.add_music_btn = tk.Button(self.main_frame, text="添加音乐踩点", width=bt_width, height=bt_height)
         self.add_music_btn.pack(expand=True)
