@@ -34,7 +34,7 @@ class ComposeVideo(Toplevel):
 
         button_width = 15
         tk.Label(self, text="操作:").grid(row=0, column=0, padx=10, pady=10)
-        self.exchange_checkbtn_num = tk.IntVar()
+        self.exchange_checkbtn_num = tk.IntVar(value=1)
         self.exchange_checkbtn = tk.Checkbutton(self, text="是否交换图片顺序", variable=self.exchange_checkbtn_num, onvalue=1, offvalue=0, width=button_width)
         self.exchange_checkbtn.grid(row=0, column=1)
 
@@ -50,8 +50,12 @@ class ComposeVideo(Toplevel):
         tk.Checkbutton(self, text="已经存在不导出", variable=self.skip_export_exists, onvalue=1,
                                                 offvalue=0, width=button_width).grid(row=0, column=6)
 
+        self.max_image_num_total_video = tk.IntVar(value=3)
+        tk.Label(self, text="每张图片最多使用次数:").grid(row=0, column=7)
+        tk.Entry(self, textvariable=self.max_image_num_total_video, width=5).grid(row=0, column=8)
+
         self.export_btn = tk.Button(self, text="导出", command=self.export, width=button_width)
-        self.export_btn.grid(row=0, column=8, pady=10)
+        self.export_btn.grid(row=0, column=9, pady=10)
 
         self.add_image_btn = tk.Button(self, text="选择音乐", command=self.select_music, width=int(button_width/2))
         self.add_image_btn.grid(row=3, column=0, padx=10, pady=10)
@@ -64,9 +68,9 @@ class ComposeVideo(Toplevel):
         self.complete_current_btn = tk.Button(self, text="选择特效", command=self.select_effects, width=10)
         self.complete_current_btn.grid(row=3, column=6)
         self.complete_all_btn = tk.Button(self, text="选择合成", command=self.select_compose, width=button_width)
-        self.complete_all_btn.grid(row=3, column=7)
+        self.complete_all_btn.grid(row=3, column=7, columnspan=2)
         self.complete_all_btn = tk.Button(self, text="选择导出设备", command=None, width=button_width)
-        self.complete_all_btn.grid(row=3, column=8)
+        self.complete_all_btn.grid(row=3, column=9)
 
         # 音乐列表
         self.music_list_box = tk.Listbox(self, cursor='arrow', selectborderwidth=2, selectmode=MULTIPLE)
@@ -90,7 +94,7 @@ class ComposeVideo(Toplevel):
 
         # 合成列表
         self.compose_list = ListImageManager(self)
-        self.compose_list.grid(row=4, column=7, sticky=NSEW, padx=10)
+        self.compose_list.grid(row=4, column=7, columnspan=2, sticky=NSEW, padx=10)
         for key, value in self.dy_data_utils.get_compose_ids_pathes().items():
             self.compose_list.add_by_path(value)
 
@@ -98,7 +102,7 @@ class ComposeVideo(Toplevel):
         self.devices_items = tk.StringVar(value=self.dy_data_utils.device_ids)
         self.device_list_box = tk.Listbox(self, cursor='arrow', selectborderwidth=2, listvariable=self.devices_items,
                                            selectmode=MULTIPLE)
-        self.device_list_box.grid(row=4, column=8, sticky=NSEW, padx=10)
+        self.device_list_box.grid(row=4, column=9, sticky=NSEW, padx=10)
         self.device_list_box.configure(exportselection=False)
 
 
@@ -289,8 +293,27 @@ class ComposeVideo(Toplevel):
 
                             paramter['video_save_name'] = video_save_name
                             export_paramter_list.append(paramter)
+
+        # 根据每张图片数量过滤掉图片重复太多的情况
+        max_image_num_total_video = self.max_image_num_total_video.get()
+        filtered_export_paramter_list = []
+        image_path_count = {}
+        for paramter in export_paramter_list:
+            legal_flag = True
+            for image_path in paramter['image']:
+                if image_path in image_path_count and image_path_count[image_path] >= max_image_num_total_video:
+                    legal_flag = False
+                    break
+
+            if legal_flag:
+                filtered_export_paramter_list.append(paramter)
+                for image_path in paramter['image']:
+                    if image_path not in image_path_count:
+                        image_path_count[image_path] = 0
+                    image_path_count[image_path] = image_path_count[image_path] + 1
+
         print(len(export_paramter_list))
-        return export_paramter_list
+        return filtered_export_paramter_list
 
     def sluify(self, paramter):
         music_name = ""
