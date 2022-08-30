@@ -66,6 +66,7 @@ def generate_single_video(info:dict):
         video_out.write(np.uint8(frame_out))
 
     # part two
+    frames_start_id = 0
     for image_id in range(len(image_paths)):
         source_image_path = image_paths[image_id]
         effect_video_path = effect_paths[image_id]
@@ -80,8 +81,9 @@ def generate_single_video(info:dict):
             part_two_frames_1 = video_frame_interpolation(part_two_frames_1, part_two_frame_num_1)
         elif (len(part_two_frames_1) // part_two_frame_num_1) > 2: # 效果视频太长，只能截取一小部分，效果展现不完整
             part_two_frames_1 = video_frame_extract(part_two_frames_1, part_two_frame_num_1)
-
-        frames_start_id = random.randint(0, len(part_two_frames_1) - part_two_frame_num_1)
+        # 使得一个视频内的特效视频截取的开始位置一致，视频看起来比较统一
+        if frames_start_id == 0:
+            frames_start_id = random.randint(0, len(part_two_frames_1) - part_two_frame_num_1)
         part_two_frames_1 = part_two_frames_1[frames_start_id:frames_start_id + part_two_frame_num_1]
         for frame in part_two_frames_1:
             frame_out = adjust_frame(background_image.copy(), frame)
