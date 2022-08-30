@@ -87,6 +87,9 @@ def generate_single_video(info:dict):
         part_two_frames_1 = part_two_frames_1[frames_start_id:frames_start_id + part_two_frame_num_1]
         for frame in part_two_frames_1:
             frame_out = adjust_frame(background_image.copy(), frame)
+            # 无开头素材视频时，文字标题则添加在第一张图片的效果上
+            if image_id == 0 and part_one_frames == 0:
+                frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
             video_out.write(np.uint8(frame_out))
 
         # part two-2
