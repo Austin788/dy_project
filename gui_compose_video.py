@@ -241,12 +241,6 @@ class ComposeVideo(Toplevel):
 
         compose_list = self.get_select_compose_list()
 
-        print(music_list)
-        print(video_list)
-        print(image_list)
-        print(effect_list)
-        print(compose_list)
-
         resource_dict = {'music': music_list, 'video': video_list, 'image': image_list, 'effect': effect_list,
                          'compose': compose_list}
 
@@ -274,7 +268,6 @@ class ComposeVideo(Toplevel):
                             effect_pathes = self.convert_pathes(paramter['image'],
                                                 os.path.join(self.dy_data_utils.effects_dir, effect_name), suffix=".mp4")
                             if len(effect_pathes) != len(paramter['image']):
-                                print(f"effect length not equal")
                                 continue
                             paramter['effect'] = effect_pathes
 
@@ -282,7 +275,6 @@ class ComposeVideo(Toplevel):
                             compose_name = os.path.basename(os.path.dirname(paramter['compose']))
                             compose_pathes = self.convert_pathes(paramter['image'], os.path.join(self.dy_data_utils.compose_dir, compose_name))
                             if len(compose_pathes) != len(paramter['image']):
-                                print(f"compose_pathes length not equal")
                                 continue
                             paramter['compose'] = compose_pathes
 
