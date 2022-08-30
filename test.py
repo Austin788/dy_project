@@ -28,13 +28,13 @@ def add_text(text_image_dir, image, frame_size):
 def add_text_simple(image, frame_size):
 
     text_content_1 = "容易招桃花的头像"
-    text_content_2 = "WeChat."
+    text_content_2 = "WeChat.."
 
     # 按字符串长的计算
     font_size = int(frame_size[1] / (len(text_content_1) + 3))
     # 变色效果
     # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-    color = (255, 0, random.randint(0, 255))
+    color = (255, 0, 255)
 
     cv2img = cv2.cvtColor( image.astype(np.uint8), cv2.COLOR_BGR2RGB)
     pilimg = Image.fromarray(cv2img)
@@ -42,10 +42,10 @@ def add_text_simple(image, frame_size):
     # PIL图片上打印汉字
     draw = ImageDraw.Draw(pilimg)
     font = ImageFont.truetype("TTF/1.ttf", font_size, encoding="utf-8")
-    draw.text((int(font_size * 1.5), int(font_size * 1.5)), text_content_1, color, font=font)
+    draw.text((int(font_size * 1.5), int((frame_size[1] - font_size * 2 ) / 2)), text_content_1, color, font=font)
 
     # 英文长短要压缩一半
-    draw.text((int((frame_size[1] - font_size * len(text_content_2) / 2) / 2 ), int(font_size * 2.5)), text_content_2, color, font=font)
+    draw.text((int((frame_size[1] - font_size * len(text_content_2) / 2) / 2 ), int((frame_size[1]) / 2)), text_content_2, color, font=font)
     cv2charimg = cv2.cvtColor(np.array(pilimg), cv2.COLOR_RGB2BGR)
 
     # cv2.imshow('im', cv2charimg)
@@ -55,7 +55,7 @@ def add_text_simple(image, frame_size):
 
 
 # 设置需要生成的视频数量
-video_number = 30
+video_number = 20
 # 设置生成视频的帧率， 【似乎素材都是等于30】
 video_fps = 30
 # 设置视频的分辨率【9:16】
@@ -66,22 +66,23 @@ music_dir = 'music'
 # 文字图片素材
 text_image_dir = 'text_image'
 # 存放开头热门素材
-begin_video_dir = 'H:/dy_data/0814/begin_video'
+begin_video_dir = 'H:/dy_data/0816/begin_video'
 # 存放原图
-source_image_dir = 'source_image'
+source_image_dir = 'H:/dy_data/0816/source_image'
 # 存放抖音运镜处理后的视频素材
-render_image_dir = 'render_image'
+render_image_dir = 'H:/dy_data/0816/render_image'
 # 存放醒图处理后的图片素材
-show_image_dir = 'show_image'
+show_image_dir = 'H:/dy_data/0816/show_image'
 # 保存路径
-video_save_dir = 'H:/dy_data/0814/video_save'
+video_save_dir = 'H:/dy_data/0816/save_video'
 
 music_name = os.listdir(music_dir)
 image_name = os.listdir(source_image_dir)
 begin_video_name = os.listdir(begin_video_dir)
 
 # TODO 目前只能预先定义好对应要的bgm要卡点的位置
-mp3_position = [5.9, 6.6, 7.3, 7.9, 8.5, 9.1, 9.8, 10.5, 11.1, 11.8, 12.4]
+# mp3_position = [5.9, 6.6, 7.3, 7.9, 8.5, 9.1, 9.8, 10.5, 11.1, 11.8, 12.4]
+mp3_position = [5.6, 6.3, 7.0, 7.6, 8.2, 8.8, 9.5, 10.2, 10.8, 11.5, 12.1]
 # 视频展示头像图片的数量，第一个间隔是放热门吸引素材视频
 image_number_per_video = int((len(mp3_position) - 1) / 2)
 
@@ -153,7 +154,10 @@ for i in range(video_number):
         frame = cv2.resize(frame, (frame_size[1], begin_video_resize_height))
         # 用于上下居中的目的 下同
         height_start = int((frame_size[0] - begin_video_resize_height) / 2)
-        new_frame[height_start:height_start+begin_video_resize_height, :, :] = frame
+        if height_start < 0:
+            new_frame[:, :, :] = frame[int(-1 * height_start / 2):int(-1 * height_start / 2)+frame_size[0], :, :]
+        else:
+            new_frame[height_start:height_start+begin_video_resize_height, :, :] = frame
         # new_frame = add_text(text_image_dir, new_frame, frame_size)
         new_frame = add_text_simple(new_frame, frame_size)
         video_out.write(np.uint8(new_frame))
@@ -166,8 +170,8 @@ for i in range(video_number):
 
     for part_id, image_id in enumerate(random_numbers):
         source_image_path = os.path.join(source_image_dir, image_name[image_id])
-        render_image_path = os.path.join(render_image_dir, image_name[image_id]).replace('.jpg', '.mp4')
-        show_image_path = os.path.join(show_image_dir, image_name[image_id])
+        render_image_path = os.path.join(render_image_dir, image_name[image_id]).replace('-1.jpg', '-3.mp4')
+        show_image_path = os.path.join(show_image_dir, image_name[image_id]).replace('-1.jpg', '-2.jpg')
 
         # 头像第一部分
         part_cap = cv2.VideoCapture(render_image_path)
