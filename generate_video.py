@@ -78,6 +78,9 @@ def generate_single_video(info:dict):
         # 视频太短进行插针处理
         if len(part_two_frames_1) < part_two_frame_num_1:
             part_two_frames_1 = video_frame_interpolation(part_two_frames_1, part_two_frame_num_1)
+        elif (len(part_two_frames_1) // part_two_frame_num_1) > 2: # 效果视频太长，只能截取一小部分，效果展现不完整
+            part_two_frames_1 = video_frame_extract(part_two_frames_1, part_two_frame_num_1)
+
         frames_start_id = random.randint(0, len(part_two_frames_1) - part_two_frame_num_1)
         part_two_frames_1 = part_two_frames_1[frames_start_id:frames_start_id + part_two_frame_num_1]
         for frame in part_two_frames_1:
@@ -182,6 +185,16 @@ def read_video(video_path):
         else:
             break
     return video_frames
+
+def video_frame_extract(video_frames, expect_frames_num):
+    # TODO 视频跳帧提取
+    extract_ratio = int(math.floor(len(video_frames) / expect_frames_num))
+    video_frames_extrct = list()
+    extract_frame_id = 0
+    while extract_frame_id < len(video_frames):
+        video_frames_extrct.append(video_frames[extract_frame_id])
+        extract_frame_id = extract_frame_id + extract_ratio
+    return video_frames_extrct
 
 
 def video_frame_interpolation(video_frames, expect_frames_num):
