@@ -232,7 +232,7 @@ class ComposeVideo(Toplevel):
         video_list = self.get_select_video_list()
 
         image_list = self.get_select_image_list()
-        if len(image_list) < 3:
+        if len(image_list) <= 0:
             return []
 
         effect_list = self.get_select_effect_list()
@@ -346,12 +346,16 @@ class ComposeVideo(Toplevel):
     def paramter_convert(self, paramter):
         new_paramter = {}
         new_paramter['music_path'] = paramter['music']
-        new_paramter['stuck_points'] = paramter['music'][:-4] + ".json"
+        new_paramter['stuck_points_path'] = paramter['music'][:-4] + ".json"
         new_paramter['video_path'] = paramter['video']
         new_paramter['image_paths'] = list(paramter['image'])
         new_paramter['effect_paths'] = paramter['effect']
         new_paramter['compose_paths'] = paramter['compose']
         new_paramter['save_path'] = os.path.join(self.dy_data_utils.device_dir, paramter['device_name'], '待发送', paramter['video_save_name'])
+        new_paramter['title_content'] = '你要的姐妹头像来了...'
+        new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, '1.ttf')
+        new_paramter['text_color'] = (125, 125, 125)
+
         return new_paramter
 
     def export(self):
@@ -388,7 +392,7 @@ class ComposeVideo(Toplevel):
         for paramter in export_paramter_list:
             paramter["device_name"] = export_list_iter.next()
             fun_paramter = self.paramter_convert(paramter)
-            generate_single_video(fun_paramter)
+            generate_single_video(**fun_paramter)
 
             # 拷贝图片到未上传
             upload_folder_name = upload_config.get_upload(paramter["device_name"])

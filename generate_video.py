@@ -8,15 +8,8 @@ from moviepy.editor import *
 import json
 import sys
 
-
-def generate_single_video(info:dict):
-    music_path = info['music_path']
-    stuck_points_path = info['stuck_points']
-    video_path = info['video_path']
-    image_paths = info['image_paths']
-    effect_paths = info['effect_paths']
-    compose_paths = info['compose_paths']
-    save_path = info['save_path']
+def generate_single_video(music_path, stuck_points_path, video_path, image_paths, effect_paths, compose_paths,
+                          save_path, title_content=None, text_font_path=None, text_color=None):
 
     # video_size = video_properties['video_size']  # （宽、高）
     # video_fps = video_properties['video_fps']
@@ -62,7 +55,8 @@ def generate_single_video(info:dict):
     part_one_frames = part_one_frames[frames_start_id:frames_start_id+part_one_frames_num]
     for frame in part_one_frames:
         frame_out = adjust_frame(background_image.copy(), frame)
-        # frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
+        if title_content is not None and os.path.exists(text_font_path) and text_color is not None:
+            frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
         video_out.write(np.uint8(frame_out))
 
     # part two
@@ -79,8 +73,8 @@ def generate_single_video(info:dict):
         # 视频太短进行插针处理
         if len(part_two_frames_1) < part_two_frame_num_1:
             part_two_frames_1 = video_frame_interpolation(part_two_frames_1, part_two_frame_num_1)
-        elif (len(part_two_frames_1) // part_two_frame_num_1) > 2: # 效果视频太长，只能截取一小部分，效果展现不完整
-            part_two_frames_1 = video_frame_extract(part_two_frames_1, part_two_frame_num_1)
+        # elif (len(part_two_frames_1) // part_two_frame_num_1) > 2: # 效果视频太长，只能截取一小部分，效果展现不完整
+        #     part_two_frames_1 = video_frame_extract(part_two_frames_1, part_two_frame_num_1)
         # 使得一个视频内的特效视频截取的开始位置一致，视频看起来比较统一
         if frames_start_id == 0:
             frames_start_id = random.randint(0, len(part_two_frames_1) - part_two_frame_num_1)
@@ -88,8 +82,9 @@ def generate_single_video(info:dict):
         for frame in part_two_frames_1:
             frame_out = adjust_frame(background_image.copy(), frame)
             # 无开头素材视频时，文字标题则添加在第一张图片的效果上
-            if image_id == 0 and part_one_frames == 0:
-                frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
+            if image_id == 0 and len(part_one_frames) == 0:
+                if title_content is not None and os.path.exists(text_font_path) and text_color is not None:
+                    frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
             video_out.write(np.uint8(frame_out))
 
         # part two-2
