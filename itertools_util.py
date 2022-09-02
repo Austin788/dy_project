@@ -23,7 +23,7 @@ def combinations(iterable, r, repeat_times=sys.maxsize, max_num=2000):
         if num >= max_num:
             return
         num += 1
-        yield tuple(pool[i] for i in indices)
+        yield list(pool[i] for i in indices)
 
     while True:
         for i in reversed(range(r)):
@@ -50,31 +50,7 @@ def combinations(iterable, r, repeat_times=sys.maxsize, max_num=2000):
             if num >= max_num:
                 return
             num += 1
-            yield tuple(pool[i] for i in indices)
-
-
-def permutations(iterable, r=None):
-    pool = tuple(iterable)
-    n = len(iterable)
-    r = n if r is None else r
-    if r > n:
-        return
-    indices = list(range(n))
-    cycles = list(range(n, n - r, -1))
-    yield tuple(pool[i] for i in indices[:r])
-    while n:
-        for i in reversed(range(r)):
-            cycles[i] -= 1
-            if cycles[i] == 0:
-                indices[i:] = indices[i + 1:] + indices[i:i + 1]
-                cycles[i] = n - i
-            else:
-                j = cycles[i]
-                indices[i], indices[-j] = indices[-j], indices[i]
-                yield tuple(pool[i] for i in indices[:r])
-                break
-        else:
-            return
+            yield list(pool[i] for i in indices)
 
 
 def permutations(iterable, r=None, repeat_times=sys.maxsize, max_num=2000):
@@ -101,7 +77,7 @@ def permutations(iterable, r=None, repeat_times=sys.maxsize, max_num=2000):
         if num >= max_num:
             return
         num += 1
-        yield tuple(pool[i] for i in indices[:r])
+        yield list(pool[i] for i in indices[:r])
 
     while n:
         for i in reversed(range(r)):
@@ -127,9 +103,9 @@ def permutations(iterable, r=None, repeat_times=sys.maxsize, max_num=2000):
                     if num >= max_num:
                         return
                     num += 1
-                    yield tuple(pool[i] for i in indices[:r])
+                    yield list(pool[i] for i in indices[:r])
                 break
-    else:
+        else:
             return
 
 
@@ -139,10 +115,10 @@ def permutations(iterable, r=None, repeat_times=sys.maxsize, max_num=2000):
 #     plist = list(permutations(pl, r, repeat_times=20000,))
 #     print(f'排列数的个数为{len(plist)}。')
 #     print('它们是:\n',plist)
-
-if __name__ == '__main__':
-    cl = list(range(42))
-    r = 6
-    clist = list(combinations(cl, r, max_num=2000))
-    print(f'组合数的个数为{len(clist)}。')
-    print('它们是:\n', clist)
+#
+# if __name__ == '__main__':
+#     cl = list(range(42))
+#     r = 6
+#     clist = list(combinations(cl, r, max_num=2000))
+#     print(f'组合数的个数为{len(clist)}。')
+#     print('它们是:\n', clist)

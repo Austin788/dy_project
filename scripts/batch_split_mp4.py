@@ -15,9 +15,9 @@ def cmp(x, y):
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/image/职业头像"
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像"
     save_dir = "/Users/meitu/Downloads/video_save"
-    video_path = "/Users/meitu/Downloads/E0D49A83-8DA0-4833-98A0-AFD77642C84F.MOV"
+    video_path = "/Users/meitu/Downloads/092B0187-8DB5-48ED-BB10-00C3425AE2BD.MOV"
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     filenames = os.listdir(image_dir)
     filenames.remove(".DS_Store")
     filenames.sort(key=functools.cmp_to_key(cmp), reverse=True)
-    filenames = filenames[36:]
+    filenames = filenames
     # print(filenames)
     # exit(0)
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         # cv2.imshow("f", frame)
         # cv2.waitKey(1)
         if ret:
-            if frame_count % 89 == 0:
+            if frame_count % 88 == 0:
                 if video_out is not None:
                     video_out.release()
                 video_out = cv2.VideoWriter(os.path.join(save_dir, filenames[filenames_count][:-4]+".mp4"), video_encoding, video_fps, (width, height))

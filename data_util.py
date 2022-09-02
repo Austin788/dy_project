@@ -85,6 +85,8 @@ class DYDataUtils():
 
     def get_avilable_group_num(self, type):
         image_dir = os.path.join(self.data_root, "image", type)
+        if not os.path.exists(image_dir):
+            return 1
         group_list = []
         for image_name in os.listdir(image_dir):
             if image_name.startswith("."):
@@ -126,6 +128,11 @@ class UploadConfig():
                 return key
         return None
 
+
+def chunks(l, n):
+   """Yield successive n-sized chunks from l."""
+   for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 if __name__ == "__main__":
     data_root = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data"

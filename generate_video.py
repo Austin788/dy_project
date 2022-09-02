@@ -96,7 +96,7 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
             video_out.write(np.uint8(frame_out))
 
     video_out.release()
-    add_music_to_video(save_path, music_path)
+    # add_music_to_video(save_path, music_path)
 
     print('video complete!')
 

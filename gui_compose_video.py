@@ -1,4 +1,5 @@
 # -*- encoding=utf-8 -*-
+import random
 from tkinter import filedialog
 from tkinter import *
 from gui_util import *
@@ -8,6 +9,8 @@ import itertools
 import shutil
 from generate_video import generate_single_video
 from wcmatch import pathlib
+from itertools_util import permutations, combinations
+
 
 class ComposeVideo(Toplevel):
     def __init__(self, master=None):
@@ -23,7 +26,7 @@ class ComposeVideo(Toplevel):
 
         self.geometry('{}x{}+{}+{}'.format(width, height, x, y))  # 大小以及位置
 
-        self.data_dir = os.path.join(os.path.dirname(__file__), "data")
+        self.data_dir = os.path.join(os.path.dirname(__file__), "data_fast")
         self.default_source = "/Users/meitu/Downloads/8.13/1-1/"
         self.dy_data_utils = DYDataUtils(self.data_dir)
         types = self.dy_data_utils.get_image_type_list()
@@ -34,9 +37,13 @@ class ComposeVideo(Toplevel):
 
         button_width = 15
         tk.Label(self, text="操作:").grid(row=0, column=0, padx=10, pady=10)
-        self.exchange_checkbtn_num = tk.IntVar(value=1)
+        self.exchange_checkbtn_num = tk.IntVar(value=0)
         self.exchange_checkbtn = tk.Checkbutton(self, text="是否交换图片顺序", variable=self.exchange_checkbtn_num, onvalue=1, offvalue=0, width=button_width)
         self.exchange_checkbtn.grid(row=0, column=1)
+
+        self.keep_first_image = tk.IntVar(value=0)
+        tk.Checkbutton(self, text="是否保持首图不变", variable=self.keep_first_image, onvalue=1,
+                                                offvalue=0, width=button_width).grid(row=1, column=1)
 
         self.img_num_per_video = tk.IntVar(value=3)
         tk.Label(self, text="视频图片数:").grid(row=0, column=2, padx=10, pady=10)
@@ -50,7 +57,7 @@ class ComposeVideo(Toplevel):
         tk.Checkbutton(self, text="已经存在不导出", variable=self.skip_export_exists, onvalue=1,
                                                 offvalue=0, width=button_width).grid(row=0, column=6)
 
-        self.max_image_num_total_video = tk.IntVar(value=3)
+        self.max_image_num_total_video = tk.IntVar(value=1)
         tk.Label(self, text="每张图片最多使用次数:").grid(row=0, column=7)
         tk.Entry(self, textvariable=self.max_image_num_total_video, width=5).grid(row=0, column=8)
 
@@ -178,21 +185,40 @@ class ComposeVideo(Toplevel):
 
     def get_select_image_list(self):
         img_num_per_video = self.img_num_per_video.get()
+        max_image_num_total_video = self.max_image_num_total_video.get()
+        keep_first_image = self.keep_first_image
         if img_num_per_video is None:
             msg.showerror("警告", "请选择需要添加的类别")
             return
         image_list = self.image_list.image_list
 
-        if len(image_list) >= 3:
-            image_list.sort()
-
-            if self.exchange_checkbtn_num.get() == 1:
-                image_list = list(itertools.permutations(image_list, img_num_per_video))  # 无序
-            else:
-                image_list = list(itertools.combinations(image_list, img_num_per_video))  # 有序
-        else:
+        if len(image_list) < 3:
             msg.showerror("警告", "请至少选择三张图片")
             return []
+
+
+        if keep_first_image == 1:
+            first_image_path = image_list[0]
+            image_list = image_list[1:]
+            img_num_per_video = img_num_per_video - 1
+
+        if max_image_num_total_video == 1:
+            image_list = list(chunks(image_list, img_num_per_video))
+            if len(image_list) > 0:
+                if len(image_list[len(image_list) - 1]) != max_image_num_total_video:
+                    image_list = image_list[:-1]
+        else:
+            if self.exchange_checkbtn_num.get() == 1:
+                image_list = list(permutations(image_list, img_num_per_video, max_image_num_total_video, max_num=100))  # 无序
+            else:
+                image_list = list(combinations(image_list, img_num_per_video, max_image_num_total_video, max_num=100))  # 有序
+
+            if len(image_list) >= 100:
+                random.shuffle(image_list)
+
+        if keep_first_image == 1:
+            for i in range(len(image_list)):
+                image_list[i] = [first_image_path] + image_list[i]
 
         return image_list
 
@@ -286,26 +312,7 @@ class ComposeVideo(Toplevel):
                             paramter['video_save_name'] = video_save_name
                             export_paramter_list.append(paramter)
 
-        # 根据每张图片数量过滤掉图片重复太多的情况
-        max_image_num_total_video = self.max_image_num_total_video.get()
-        filtered_export_paramter_list = []
-        image_path_count = {}
-        for paramter in export_paramter_list:
-            legal_flag = True
-            for image_path in paramter['image']:
-                if image_path in image_path_count and image_path_count[image_path] >= max_image_num_total_video:
-                    legal_flag = False
-                    break
-
-            if legal_flag:
-                filtered_export_paramter_list.append(paramter)
-                for image_path in paramter['image']:
-                    if image_path not in image_path_count:
-                        image_path_count[image_path] = 0
-                    image_path_count[image_path] = image_path_count[image_path] + 1
-
-        print(len(export_paramter_list))
-        return filtered_export_paramter_list
+        return export_paramter_list
 
     def sluify(self, paramter):
         music_name = ""
@@ -352,9 +359,9 @@ class ComposeVideo(Toplevel):
         new_paramter['effect_paths'] = paramter['effect']
         new_paramter['compose_paths'] = paramter['compose']
         new_paramter['save_path'] = os.path.join(self.dy_data_utils.device_dir, paramter['device_name'], '待发送', paramter['video_save_name'])
-        new_paramter['title_content'] = '你要的姐妹头像来了...'
-        new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, '1.ttf')
-        new_paramter['text_color'] = (125, 125, 125)
+        # new_paramter['title_content'] = '你要的姐妹头像来了...'
+        # new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, '1.ttf')
+        # new_paramter['text_color'] = (125, 125, 125)
 
         return new_paramter
 
@@ -373,6 +380,7 @@ class ComposeVideo(Toplevel):
         export_paramter_list = self.get_export_resource_list()
 
         if len(export_paramter_list) == 0:
+            msg.showerror("警告", f"导出数量为0！")
             return
 
 

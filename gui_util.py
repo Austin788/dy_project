@@ -106,13 +106,14 @@ def create_list_box_selector(cls):
 
 
 class ListImageManager(tk.Frame):
-    def __init__(self, parent, image_dict={}, frame_width=200+50, frame_height=700, image_size=100):
+    def __init__(self, parent, image_dict={}, frame_width=200+50, frame_height=680, image_size=100):
         tk.Frame.__init__(self, parent)
 
         self.column_num = int(frame_width / image_size)
         self.row_num = int(frame_height / image_size)
         print(self.row_num, self.column_num)
         self.image_size = image_size
+        self.frame_height = frame_height
 
 
         self.main_frame = tk.Frame(self, width=frame_width, height=frame_height, bd=2, highlightcolor='black', highlightbackground='black', highlightthickness=1)
@@ -150,7 +151,7 @@ class ListImageManager(tk.Frame):
                       width=self.image_size, cursor="arrow", command=lambda: self.delete(path)).grid(row=row_index,
                                                                                                 column=column_index)
             self.image_count += 1
-        self.main_frame.configure(height=700)
+        self.main_frame.configure(height=self.frame_height)
 
     def add_by_cv_frame(self, frame, path):
         if self.is_exists(path):
