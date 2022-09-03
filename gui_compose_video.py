@@ -186,7 +186,7 @@ class ComposeVideo(Toplevel):
     def get_select_image_list(self):
         img_num_per_video = self.img_num_per_video.get()
         max_image_num_total_video = self.max_image_num_total_video.get()
-        keep_first_image = self.keep_first_image
+        keep_first_image = self.keep_first_image.get()
         if img_num_per_video is None:
             msg.showerror("警告", "请选择需要添加的类别")
             return
@@ -205,7 +205,7 @@ class ComposeVideo(Toplevel):
         if max_image_num_total_video == 1:
             image_list = list(chunks(image_list, img_num_per_video))
             if len(image_list) > 0:
-                if len(image_list[len(image_list) - 1]) != max_image_num_total_video:
+                if len(image_list[len(image_list) - 1]) != img_num_per_video:
                     image_list = image_list[:-1]
         else:
             if self.exchange_checkbtn_num.get() == 1:
@@ -400,6 +400,7 @@ class ComposeVideo(Toplevel):
         for paramter in export_paramter_list:
             paramter["device_name"] = export_list_iter.next()
             fun_paramter = self.paramter_convert(paramter)
+            print(fun_paramter)
             generate_single_video(**fun_paramter)
 
             # 拷贝图片到未上传

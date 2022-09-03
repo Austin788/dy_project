@@ -16,8 +16,8 @@ def cmp(x, y):
 
 if __name__ == "__main__":
     image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像"
-    save_dir = "/Users/meitu/Downloads/video_save"
-    video_path = "/Users/meitu/Downloads/092B0187-8DB5-48ED-BB10-00C3425AE2BD.MOV"
+    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜"
+    video_path = "/Users/meitu/Downloads/367EE31B-6E58-4C5F-A1F0-1A0EC344A97E.MOV"
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -28,7 +28,8 @@ if __name__ == "__main__":
 
     data_utils = DYDataUtils()
     filenames = os.listdir(image_dir)
-    filenames.remove(".DS_Store")
+    if ".DS_Store" in filenames:
+        filenames.remove(".DS_Store")
     filenames.sort(key=functools.cmp_to_key(cmp), reverse=True)
     filenames = filenames
     # print(filenames)

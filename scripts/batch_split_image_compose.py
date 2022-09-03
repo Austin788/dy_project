@@ -8,12 +8,14 @@ from generate_video import add_title_text
 
 
 if __name__ == "__main__":
-    dir = "/Users/meitu/Downloads/用所选项目新建的文件夹 10"
-    image_dir_name = "职业头像"
+    dir = "/Users/meitu/Downloads/用所选项目新建的文件夹 14"
+    image_dir_name = "姓氏头像"
     compose_name = "合成"
-    image_num = 9
+    image_num = 8
 
     filenames = os.listdir(dir)
+    if ".DS_Store" in filenames:
+        filenames.remove(".DS_Store")
     filenames.sort()
 
 
@@ -39,9 +41,9 @@ if __name__ == "__main__":
             shutil.copy(os.path.join(dir, filenames[j*image_num + i]), compose_save_path)
 
     # 生成模板png
-    for compose_dir in os.list(dy_data_utils.compose_dir):
+    for compose_dir in os.listdir(dy_data_utils.compose_dir):
         if str(compose_dir).startswith(compose_name):
             empty_image = np.ones((256, 256, 3), dtype=np.uint8) * 255
-            add_title_text(empty_image, str(compose_dir), text_font_path=os.path.join(dy_data_utils.fonts_dir, "1.ttf"), text_color=(0, 0, 255))
+            empty_image = add_title_text(empty_image, str(compose_dir), text_font_path=os.path.join(dy_data_utils.fonts_dir, "1.ttf"), text_color=(0, 0, 255))
             cv2.imwrite(os.path.join(dy_data_utils.compose_dir, compose_dir, "模板示例.PNG"), empty_image)
 

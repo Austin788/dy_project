@@ -9,10 +9,10 @@ if __name__ == "__main__":
     image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像"
 
     # 先用剪映导一遍，保证帧率30
-    video_path = "/Users/meitu/Downloads/9月2日.mp4"
+    video_path = "/Users/meitu/Downloads/一眼就心动的头像2.mp4"
     save_dir = os.path.join("/Users/meitu/Downloads/", "split_video_"+os.path.basename(video_path))
     frame_rate = 30
-    split_time = [2.2, 2.18, 3.05] #剪映上的计时方式 同一组视频的最后一帧
+    split_time = [5.3] #剪映上的计时方式 同一组视频的最后一帧
 
     for i in range(len(split_time)):
         parts = str(split_time[i]).split('.')

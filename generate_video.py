@@ -205,49 +205,27 @@ def video_frame_interpolation(video_frames, expect_frames_num):
 
 
 if __name__ == '__main__':
-    stuck_points = read_stuck_points("/Users/meitu/Documents/midlife_crisis/project/dy_project/data/music/@博博越野(不磕博) 创作的原声-博博越野(不磕博).json", 7)
-    print(stuck_points)
-    exit(0)
-    # 是否要默认断点最后一个值是否等于mp3长度
-    info_begin = {
-        'music_path': 'test/1.mp3',
-        'stuck_points': 'test/1.txt',
-        'video_path': 'test/1.mp4',
-        'image_paths':
-            ['test/1-1.jpg',
-             'test/2-1.jpg',
-             'test/3-1.jpg'],
-        'effect_paths':
-            ['test/1-2.mp4',
-             'test/2-2.mp4',
-             'test/3-2.mp4'],
-        'compose_paths':
-            ['test/1-1.jpg',
-             'test/2-1.jpg',
-             'test/3-1.jpg'],
-        'save_path': 'test/result-1.mp4'
-        }
-    info_no_begin = {
-        'music_path': 'test/1.mp3',
-        'stuck_points': 'test/2.txt',
-        'video_path': '',
-        'image_paths':
-            ['test/1-1.jpg',
-             'test/2-1.jpg',
-             'test/3-1.jpg'],
-        'effect_paths':
-            ['test/1-2.mp4',
-             'test/2-2.mp4',
-             'test/3-2.mp4'],
-        'compose_paths':
-            ['test/1-1.jpg',
-             'test/2-1.jpg',
-             'test/3-1.jpg'],
-        'save_path': 'test/result-2.mp4'
-    }
-    generate_single_video(info_begin)
-    generate_single_video(info_no_begin)
+    parmater = {
+        'music_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@这个头像你值得换创作的原声-这个头像你值得换.mp3',
+        'stuck_points_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@这个头像你值得换创作的原声-这个头像你值得换.json',
+        'video_path': 'None',
+        'title_content':'你要的姐妹头像来了',
+        'text_font_path':'/Users/meitu/Documents/midlife_crisis/project/dy_project/data/fonts/闲鱼特殊字体.ttf',
+        'text_color':(255,255,255),
+        'image_paths': [
+        '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像/1_1_3c62ea8267b62663d039b59ce1be4b68.jpg',
+        '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像/1_2_7aa6c29f72c187fe6cb96df6f2e8b19e.jpg',
+        '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像/1_3_737faeeb97f094e27ed1c2595bccb6c5.jpg'],
+        'effect_paths': [
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_1_3c62ea8267b62663d039b59ce1be4b68.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_2_7aa6c29f72c187fe6cb96df6f2e8b19e.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_3_737faeeb97f094e27ed1c2595bccb6c5.mp4'],
+        'compose_paths': [
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_3/1_1_3c62ea8267b62663d039b59ce1be4b68.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_3/1_2_7aa6c29f72c187fe6cb96df6f2e8b19e.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_3/1_3_737faeeb97f094e27ed1c2595bccb6c5.jpg'],
+        'save_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/device/000000导出测试/待发送/test.mp4'}
 
-
+    generate_single_video(**parmater)
 
 
