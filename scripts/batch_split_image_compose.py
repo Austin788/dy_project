@@ -4,7 +4,7 @@ import shutil
 import numpy as np
 
 from data_util import md5, DYDataUtils
-from generate_video import add_title_text
+from generate_video import TextWriter
 
 
 if __name__ == "__main__":
@@ -18,10 +18,10 @@ if __name__ == "__main__":
         filenames.remove(".DS_Store")
     filenames.sort()
 
-
-
     dy_data_utils = DYDataUtils(data_root="/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast")
-    group_num = dy_data_utils.get_avilable_group_num(image_dir_name)
+    group_num = dy_data_utils.get_avilable_group_num(type=image_dir_name,
+                                                     data_root="/Users/meitu/Documents/midlife_crisis/project/dy_project/data")
+
     for i in range(image_num):
         image_path = os.path.join(dir, filenames[i])
         image_md5 = md5(image_path)
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     for compose_dir in os.listdir(dy_data_utils.compose_dir):
         if str(compose_dir).startswith(compose_name):
             empty_image = np.ones((256, 256, 3), dtype=np.uint8) * 255
-            empty_image = add_title_text(empty_image, str(compose_dir), text_font_path=os.path.join(dy_data_utils.fonts_dir, "1.ttf"), text_color=(0, 0, 255))
+            text_writer = TextWriter(title_content=str(compose_dir), text_font_path=os.path.join(dy_data_utils.fonts_dir, "1.ttf"), text_color=(0, 0, 255))
+            empty_image = text_writer.add_title_text(empty_image, "CENTER")
             cv2.imwrite(os.path.join(dy_data_utils.compose_dir, compose_dir, "模板示例.PNG"), empty_image)
 

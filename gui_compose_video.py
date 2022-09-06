@@ -359,9 +359,10 @@ class ComposeVideo(Toplevel):
         new_paramter['effect_paths'] = paramter['effect']
         new_paramter['compose_paths'] = paramter['compose']
         new_paramter['save_path'] = os.path.join(self.dy_data_utils.device_dir, paramter['device_name'], '待发送', paramter['video_save_name'])
-        # new_paramter['title_content'] = '你要的姐妹头像来了...'
-        # new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, '1.ttf')
-        # new_paramter['text_color'] = (125, 125, 125)
+        new_paramter['title_content'] = ['给自己换一个', '姓氏谐音梗头像', '惊艳所有人']
+        new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, '落雪无声黑体.ttf')
+        new_paramter['text_color'] = (255, 255, 255)
+        new_paramter['title_position'] = "TOP"
 
         return new_paramter
 
@@ -386,6 +387,10 @@ class ComposeVideo(Toplevel):
 
         answer = msg.askquestion(title='提示',
                                  message=f"预计可以生成{min(len(export_paramter_list), export_video_num)}个视频，是否继续！")
+
+        if len(export_paramter_list) > export_video_num:
+            export_paramter_list = export_paramter_list[:export_video_num]
+
         if answer != msg.YES:
             return
 

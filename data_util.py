@@ -83,8 +83,10 @@ class DYDataUtils():
                     raise ValueError(f"file 模板示例.PNG 在{dir}不存在，请进行添加！")
         return id_pathes
 
-    def get_avilable_group_num(self, type):
-        image_dir = os.path.join(self.data_root, "image", type)
+    def get_avilable_group_num(self, type, data_root=None):
+        if data_root is None:
+            data_root = self.data_root
+        image_dir = os.path.join(data_root, "image", type)
         if not os.path.exists(image_dir):
             return 1
         group_list = []

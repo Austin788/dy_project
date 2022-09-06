@@ -15,9 +15,9 @@ def cmp(x, y):
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像"
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像"
     save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜"
-    video_path = "/Users/meitu/Downloads/367EE31B-6E58-4C5F-A1F0-1A0EC344A97E.MOV"
+    video_path = "/Users/meitu/Downloads/D81FF6FC-C414-4FDC-AB21-B439E7BCF6E0.MOV"
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

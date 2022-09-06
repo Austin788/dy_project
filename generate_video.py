@@ -7,17 +7,90 @@ from PIL import Image, ImageDraw, ImageFont
 from moviepy.editor import *
 import json
 import sys
+from enum import Enum
+
+
+# TextPosition = Enum("Position", ('CENTER', 'TOP'))
+
+
+class TextWriter():
+    def __init__(self, title_content, text_font_path, text_color, target_width_ratio=0.7, padding_y=5, min_y=70):
+        self.title_content = title_content
+        self.text_font_path = text_font_path
+        self.text_color = text_color
+        self.target_width_ratio = target_width_ratio
+        self.min_y = min_y
+        self.padding_y = padding_y
+
+        self.font = None
+        self.top_position = None
+        self.center_position = None
+
+    def get_max_title(self):
+        max_len = -1
+        max_title = None
+        for title in self.title_content:
+            if len(title) > max_len:
+                max_len = len(title)
+                max_title = title
+        return max_title
+
+    @staticmethod
+    def find_font_size(text, font, image, target_width_ratio):
+        tested_font_size = 100
+        tested_font = ImageFont.truetype(font, tested_font_size)
+        observed_width, observed_height = TextWriter.get_text_size(text, image, tested_font)
+        estimated_font_size = tested_font_size / (observed_width / image.width) * target_width_ratio
+        return round(estimated_font_size)
+
+    @staticmethod
+    def get_text_size(text, image, font):
+        im = Image.new('RGB', (image.width, image.height))
+        draw = ImageDraw.Draw(im)
+        return draw.textsize(text, font)
+
+    def add_title_text(self, image, position):
+        # 变色效果
+        pilimg = Image.fromarray(cv2.cvtColor(image.astype(np.uint8), cv2.COLOR_BGR2RGB))
+
+        if self.font is None:
+            font_size = TextWriter.find_font_size(self.get_max_title(), self.text_font_path, pilimg,
+                                                  target_width_ratio=self.target_width_ratio)
+            self.font = ImageFont.truetype(self.text_font_path, font_size, encoding="utf-8")
+
+            self.observed_width, self.observed_height = TextWriter.get_text_size(self.get_max_title(), pilimg, self.font)
+
+            title_height = self.observed_height * len(self.title_content) + self.padding_y * (len(self.title_content) - 1)
+
+            self.top_min_y = max(self.min_y, 400 - title_height)
+            self.center_min_y = max(self.min_y, pilimg.height - title_height / 2)
+
+        draw = ImageDraw.Draw(pilimg)
+
+        if position == "TOP":
+            for i, title in enumerate(self.title_content):
+                observed_width, _ = TextWriter.get_text_size(title, pilimg, self.font)
+                position = ((pilimg.width - observed_width) / 2, self.top_min_y + i * (self.observed_height + self.padding_y))
+                draw.text(position, title, self.text_color, font=self.font)
+
+        if position == "CENTER":
+            for i, title in enumerate(self.title_content):
+                observed_width, _ = TextWriter.get_text_size(title, pilimg, self.font)
+                position = ((pilimg.width - observed_width) / 2, self.center_min_y + i * (self.observed_height + self.padding_y))
+                draw.text(position, title, self.text_color, font=self.font)
+
+        return cv2.cvtColor(np.array(pilimg), cv2.COLOR_RGB2BGR)
+
 
 def generate_single_video(music_path, stuck_points_path, video_path, image_paths, effect_paths, compose_paths,
-                          save_path, title_content=None, text_font_path=None, text_color=None):
-
+                          save_path, title_content=None, text_font_path=None, text_color=None, title_position=None):
     # video_size = video_properties['video_size']  # （宽、高）
     # video_fps = video_properties['video_fps']
     # video_encoding = video_properties['video_encoding']
     # video_background_color = video_properties['video_background_color']
 
 
-    video_size = (1080, 1920) # （宽、高）
+    video_size = (1080, 1920)  # （宽、高）
     video_fps = 30
     video_encoding = cv2.VideoWriter_fourcc(*'XVID')
     video_background_color = (0, 0, 0)
@@ -28,8 +101,6 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
         stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths) * 2)
         stuck_points = [0] + stuck_points
 
-
-
     # 设置统一的背景图片
     background_image = np.zeros((video_size[1], video_size[0], 3))
     for RGB_id, RGB_value in enumerate(video_background_color):
@@ -37,6 +108,11 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
 
     # 视频输出流
     video_out = cv2.VideoWriter(save_path, video_encoding, video_fps, video_size)
+
+    if len(title_content) > 0 and os.path.exists(text_font_path) and text_color is not None:
+        text_writer = TextWriter(title_content, text_font_path, text_color)
+    else:
+        text_writer = None
 
     # part one
     # 无开头素材视频
@@ -51,12 +127,12 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
     if len(part_one_frames) < part_one_frames_num:
         part_one_frames = video_frame_interpolation(part_one_frames, part_one_frames_num)
 
-    frames_start_id = random.randint(0, len(part_one_frames)-part_one_frames_num)
-    part_one_frames = part_one_frames[frames_start_id:frames_start_id+part_one_frames_num]
+    frames_start_id = random.randint(0, len(part_one_frames) - part_one_frames_num)
+    part_one_frames = part_one_frames[frames_start_id:frames_start_id + part_one_frames_num]
     for frame in part_one_frames:
         frame_out = adjust_frame(background_image.copy(), frame)
-        if title_content is not None and os.path.exists(text_font_path) and text_color is not None:
-            frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
+        if text_writer is not None:
+            frame_out = text_writer.add_title_text(frame_out, title_position)
         video_out.write(np.uint8(frame_out))
 
     # part two
@@ -83,8 +159,8 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
             frame_out = adjust_frame(background_image.copy(), frame)
             # 无开头素材视频时，文字标题则添加在第一张图片的效果上
             if image_id == 0 and len(part_one_frames) == 0:
-                if title_content is not None and os.path.exists(text_font_path) and text_color is not None:
-                    frame_out = add_title_text(frame_out, title_content, text_font_path, text_color)
+                if text_writer is not None:
+                    frame_out = text_writer.add_title_text(frame_out, title_position)
             video_out.write(np.uint8(frame_out))
 
         # part two-2
@@ -141,37 +217,17 @@ def add_music_to_video(video_path, music_path):
     os.remove(tmp_path)
 
 
-def add_title_text(image, title_content, text_font_path, text_color):
-    frame_size = image.shape
-    font_size = int(frame_size[1] / (len(title_content) + 4))
-    # 变色效果
-    # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-    color = text_color
-    cv2img = cv2.cvtColor( image.astype(np.uint8), cv2.COLOR_BGR2RGB)
-    pilimg = Image.fromarray(cv2img)
-    draw = ImageDraw.Draw(pilimg)
-    font = ImageFont.truetype(text_font_path, font_size, encoding="utf-8")
-    if title_content.isalpha():
-        adjust_x = 2
-    else:
-        adjust_x = 1
-    draw_xy = ((int((frame_size[1] - font_size * len(title_content) / adjust_x)) / 2), int(font_size * 4))
-    draw.text(draw_xy, title_content, color, font=font)
-    cv2charimg = cv2.cvtColor(np.array(pilimg), cv2.COLOR_RGB2BGR)
-    return cv2charimg
-
-
 def adjust_frame(background, frame):
     resize_width = int(background.shape[1])
     resize_height = int(background.shape[1] / frame.shape[1] * frame.shape[0])
     frame = cv2.resize(frame, (resize_width, resize_height))
     start_row = int((background.shape[0] - frame.shape[0]) / 2)
     if start_row < 0:
-        cover_frame = frame[start_row * -1:start_row * -1+background.shape[0]]
+        cover_frame = frame[start_row * -1:start_row * -1 + background.shape[0]]
         start_row = 0
     else:
         cover_frame = frame
-    background[start_row:start_row+cover_frame.shape[0], :, :] = cover_frame
+    background[start_row:start_row + cover_frame.shape[0], :, :] = cover_frame
     return background
 
 
@@ -185,6 +241,7 @@ def read_video(video_path):
         else:
             break
     return video_frames
+
 
 def video_frame_extract(video_frames, expect_frames_num):
     # TODO 视频跳帧提取
@@ -206,26 +263,40 @@ def video_frame_interpolation(video_frames, expect_frames_num):
 
 if __name__ == '__main__':
     parmater = {
-        'music_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@这个头像你值得换创作的原声-这个头像你值得换.mp3',
-        'stuck_points_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@这个头像你值得换创作的原声-这个头像你值得换.json',
-        'video_path': 'None',
-        'title_content':'你要的姐妹头像来了',
-        'text_font_path':'/Users/meitu/Documents/midlife_crisis/project/dy_project/data/fonts/闲鱼特殊字体.ttf',
-        'text_color':(255,255,255),
-        'image_paths': [
-        '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像/1_1_3c62ea8267b62663d039b59ce1be4b68.jpg',
-        '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像/1_2_7aa6c29f72c187fe6cb96df6f2e8b19e.jpg',
-        '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/职业头像/1_3_737faeeb97f094e27ed1c2595bccb6c5.jpg'],
+        'music_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@艺馨不老张创作的原声-艺馨不老张.mp3',
+        'stuck_points_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@艺馨不老张创作的原声-艺馨不老张.json',
+        'video_path': 'None', 'image_paths': [
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_1_9ef463d6a59a2ebc6222ae17479c8172.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_2_f0fdf9bfdbf7735a51085daefe4f24db.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_3_e89beffd24f74c703ac7f2ec8d7688d4.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_4_b998f122f44e284920c3aa1c86baeb33.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_5_a48d318423c6ab5faf5712fc02786ba0.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_6_094ea5b15f08f87dc0bdf4d72e8a30bc.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_7_2c47dabceb30a6e6778f3370ba05cc77.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_8_e0fa0562e34fb24674ea7d5e9c5c20f8.jpg'],
         'effect_paths': [
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_1_3c62ea8267b62663d039b59ce1be4b68.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_2_7aa6c29f72c187fe6cb96df6f2e8b19e.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_3_737faeeb97f094e27ed1c2595bccb6c5.mp4'],
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_1_9ef463d6a59a2ebc6222ae17479c8172.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_2_f0fdf9bfdbf7735a51085daefe4f24db.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_3_e89beffd24f74c703ac7f2ec8d7688d4.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_4_b998f122f44e284920c3aa1c86baeb33.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_5_a48d318423c6ab5faf5712fc02786ba0.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_6_094ea5b15f08f87dc0bdf4d72e8a30bc.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_7_2c47dabceb30a6e6778f3370ba05cc77.mp4',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_8_e0fa0562e34fb24674ea7d5e9c5c20f8.mp4'],
         'compose_paths': [
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_3/1_1_3c62ea8267b62663d039b59ce1be4b68.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_3/1_2_7aa6c29f72c187fe6cb96df6f2e8b19e.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_3/1_3_737faeeb97f094e27ed1c2595bccb6c5.jpg'],
-        'save_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/device/000000导出测试/待发送/test.mp4'}
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_1_9ef463d6a59a2ebc6222ae17479c8172.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_2_f0fdf9bfdbf7735a51085daefe4f24db.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_3_e89beffd24f74c703ac7f2ec8d7688d4.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_4_b998f122f44e284920c3aa1c86baeb33.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_5_a48d318423c6ab5faf5712fc02786ba0.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_6_094ea5b15f08f87dc0bdf4d72e8a30bc.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_7_2c47dabceb30a6e6778f3370ba05cc77.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_8_e0fa0562e34fb24674ea7d5e9c5c20f8.jpg'],
+        'save_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/device/000000导出测试/待发送/@艺馨不老张创作的原声-艺馨不__9ef463d6a5f0fdf9bfdbe89beffd24b998f122f4_摇摆运镜_合成_4.mp4',
+        # 'title_content': ['姓氏谐音梗头像'],
+        'title_content': ['给自己换一个', '姓氏谐音梗头像', '惊艳所有人'],
+        # 'title_content': ['你们要的姐妹头像来啦', '。。。。。。'],
+        'text_font_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/fonts/落雪无声黑体.ttf',
+        'text_color': (250, 225, 62), 'title_position': 'TOP'}
 
     generate_single_video(**parmater)
-
-
