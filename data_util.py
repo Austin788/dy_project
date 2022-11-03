@@ -38,6 +38,17 @@ class DYDataUtils():
     def device_dir(self):
         return os.path.join(self.data_root, "device")
 
+    @property
+    def compose_template_dir(self):
+        return os.path.join(self.data_root, "template")
+
+    @property
+    def common_template_list(self):
+        common_list =  [
+            '情侣6图.png'
+        ]
+        return [os.path.join(self.data_root, "template", name) for name in common_list]
+
     @staticmethod
     def get_dir_names(path):
         dir_lists = []
