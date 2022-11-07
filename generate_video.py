@@ -12,6 +12,21 @@ from enum import Enum
 
 # TextPosition = Enum("Position", ('CENTER', 'TOP'))
 
+def border_text_draw(draw, pos, text, font, fill=None, border='black', bp=1):
+    x, y = pos
+    shadowcolor = border
+    draw.text((x - bp, y), text, font=font, fill=shadowcolor)
+    draw.text((x + bp, y), text, font=font, fill=shadowcolor)
+    draw.text((x, y - bp), text, font=font, fill=shadowcolor)
+    draw.text((x, y + bp), text, font=font, fill=shadowcolor)
+    # thicker border
+    draw.text((x - bp, y - bp), text, font=font, fill=shadowcolor)
+    draw.text((x + bp, y - bp), text, font=font, fill=shadowcolor)
+    draw.text((x - bp, y + bp), text, font=font, fill=shadowcolor)
+    draw.text((x + bp, y + bp), text, font=font, fill=shadowcolor)
+    # now draw the text over it
+    draw.text((x, y), text, font=font, fill=fill)
+
 
 class TextWriter():
     def __init__(self, title_content, text_font_path, text_color, target_width_ratio=0.7, padding_y=5, min_y=70):
@@ -58,26 +73,31 @@ class TextWriter():
                                                   target_width_ratio=self.target_width_ratio)
             self.font = ImageFont.truetype(self.text_font_path, font_size, encoding="utf-8")
 
-            self.observed_width, self.observed_height = TextWriter.get_text_size(self.get_max_title(), pilimg, self.font)
+            self.observed_width, self.observed_height = TextWriter.get_text_size(self.get_max_title(), pilimg,
+                                                                                 self.font)
 
-            title_height = self.observed_height * len(self.title_content) + self.padding_y * (len(self.title_content) - 1)
+            title_height = self.observed_height * len(self.title_content) + self.padding_y * (
+                len(self.title_content) - 1)
 
             self.top_min_y = max(self.min_y, 400 - title_height)
-            self.center_min_y = max(self.min_y, pilimg.height - title_height / 2)
+            self.center_min_y = max(self.min_y, (pilimg.height - title_height) / 2)
 
         draw = ImageDraw.Draw(pilimg)
 
-        if position == "TOP":
-            for i, title in enumerate(self.title_content):
-                observed_width, _ = TextWriter.get_text_size(title, pilimg, self.font)
-                position = ((pilimg.width - observed_width) / 2, self.top_min_y + i * (self.observed_height + self.padding_y))
-                draw.text(position, title, self.text_color, font=self.font)
+        for i, title in enumerate(self.title_content):
+            if position == "TOP":
 
-        if position == "CENTER":
-            for i, title in enumerate(self.title_content):
                 observed_width, _ = TextWriter.get_text_size(title, pilimg, self.font)
-                position = ((pilimg.width - observed_width) / 2, self.center_min_y + i * (self.observed_height + self.padding_y))
-                draw.text(position, title, self.text_color, font=self.font)
+                position = (
+                    (pilimg.width - observed_width) / 2, self.top_min_y + i * (self.observed_height + self.padding_y))
+
+            if position == "CENTER":
+                observed_width, _ = TextWriter.get_text_size(title, pilimg, self.font)
+                position = (
+                    (pilimg.width - observed_width) / 2,
+                    self.center_min_y + i * (self.observed_height + self.padding_y))
+            # draw.text(position, title, fill=self.text_color, font=self.font)
+            border_text_draw(draw, position, title, fill=self.text_color, font=self.font)
 
         return cv2.cvtColor(np.array(pilimg), cv2.COLOR_RGB2BGR)
 
@@ -107,6 +127,8 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
         background_image[:, :, RGB_id] = RGB_value
 
     # 视频输出流
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))
     video_out = cv2.VideoWriter(save_path, video_encoding, video_fps, video_size)
 
     if len(title_content) > 0 and os.path.exists(text_font_path) and text_color is not None:
@@ -172,7 +194,7 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
             video_out.write(np.uint8(frame_out))
 
     video_out.release()
-    # add_music_to_video(save_path, music_path)
+    add_music_to_video(save_path, music_path)
 
     print('video complete!')
 
@@ -262,41 +284,29 @@ def video_frame_interpolation(video_frames, expect_frames_num):
 
 
 if __name__ == '__main__':
-    parmater = {
-        'music_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@艺馨不老张创作的原声-艺馨不老张.mp3',
-        'stuck_points_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/@艺馨不老张创作的原声-艺馨不老张.json',
-        'video_path': 'None', 'image_paths': [
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_1_9ef463d6a59a2ebc6222ae17479c8172.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_2_f0fdf9bfdbf7735a51085daefe4f24db.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_3_e89beffd24f74c703ac7f2ec8d7688d4.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_4_b998f122f44e284920c3aa1c86baeb33.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_5_a48d318423c6ab5faf5712fc02786ba0.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_6_094ea5b15f08f87dc0bdf4d72e8a30bc.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_7_2c47dabceb30a6e6778f3370ba05cc77.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像/1_8_e0fa0562e34fb24674ea7d5e9c5c20f8.jpg'],
-        'effect_paths': [
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_1_9ef463d6a59a2ebc6222ae17479c8172.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_2_f0fdf9bfdbf7735a51085daefe4f24db.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_3_e89beffd24f74c703ac7f2ec8d7688d4.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_4_b998f122f44e284920c3aa1c86baeb33.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_5_a48d318423c6ab5faf5712fc02786ba0.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_6_094ea5b15f08f87dc0bdf4d72e8a30bc.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_7_2c47dabceb30a6e6778f3370ba05cc77.mp4',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜/1_8_e0fa0562e34fb24674ea7d5e9c5c20f8.mp4'],
-        'compose_paths': [
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_1_9ef463d6a59a2ebc6222ae17479c8172.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_2_f0fdf9bfdbf7735a51085daefe4f24db.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_3_e89beffd24f74c703ac7f2ec8d7688d4.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_4_b998f122f44e284920c3aa1c86baeb33.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_5_a48d318423c6ab5faf5712fc02786ba0.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_6_094ea5b15f08f87dc0bdf4d72e8a30bc.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_7_2c47dabceb30a6e6778f3370ba05cc77.jpg',
-            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_8_e0fa0562e34fb24674ea7d5e9c5c20f8.jpg'],
-        'save_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/device/000000导出测试/待发送/@艺馨不老张创作的原声-艺馨不__9ef463d6a5f0fdf9bfdbe89beffd24b998f122f4_摇摆运镜_合成_4.mp4',
-        # 'title_content': ['姓氏谐音梗头像'],
-        'title_content': ['给自己换一个', '姓氏谐音梗头像', '惊艳所有人'],
-        # 'title_content': ['你们要的姐妹头像来啦', '。。。。。。'],
-        'text_font_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/fonts/落雪无声黑体.ttf',
-        'text_color': (250, 225, 62), 'title_position': 'TOP'}
+    parmater = {'music_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/这头像太适合你兄弟了.mp3',
+                'stuck_points_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/music/这头像太适合你兄弟了.json',
+                'video_path': 'None', 'image_paths': [
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_17_51ef0edc2f97853ff5d44ace8c7123de.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_16_f0558b245fbaf104d3fb7d6786264681.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_15_a1c66aad30a94f7737f55bad66caa7c4.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_14_ca0af621aabe36ab8cf3fe43619579cc.jpg',
+            '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_13_0e01c75c64e4a3034d3105d0e33eb3f1.jpg'],
+                'effect_paths': [
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_17_51ef0edc2f97853ff5d44ace8c7123de.mp4',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_16_f0558b245fbaf104d3fb7d6786264681.mp4',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_15_a1c66aad30a94f7737f55bad66caa7c4.mp4',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_14_ca0af621aabe36ab8cf3fe43619579cc.mp4',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_13_0e01c75c64e4a3034d3105d0e33eb3f1.mp4'],
+                'compose_paths': [
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_17_51ef0edc2f97853ff5d44ace8c7123de.jpg',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_16_f0558b245fbaf104d3fb7d6786264681.jpg',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_15_a1c66aad30a94f7737f55bad66caa7c4.jpg',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_14_ca0af621aabe36ab8cf3fe43619579cc.jpg',
+                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_13_0e01c75c64e4a3034d3105d0e33eb3f1.jpg'],
+                'save_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/device/000000导出测试/待发送/这头像太适合你兄弟了.mp3__51ef0edc2ff0558b245fa1c66aad30ca0af621aa_3D运镜_合成_4.mp4',
+                'title_content': ['这头像太适合我兄弟了'],
+                'text_font_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/fonts/新青年体.ttf',
+                'text_color': (255, 255, 255), 'title_position': 'CENTER'}
 
     generate_single_video(**parmater)

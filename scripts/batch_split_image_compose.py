@@ -8,10 +8,10 @@ from generate_video import TextWriter
 
 
 if __name__ == "__main__":
-    dir = "/Users/meitu/Downloads/用所选项目新建的文件夹 14"
-    image_dir_name = "姓氏头像"
+    dir = "/Users/meitu/Downloads/save3"
+    image_dir_name = "胖子奥特曼"
     compose_name = "合成"
-    image_num = 8
+    image_num = 17
 
     filenames = os.listdir(dir)
     if ".DS_Store" in filenames:

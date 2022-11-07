@@ -44,10 +44,33 @@ class DYDataUtils():
 
     @property
     def common_template_list(self):
-        common_list =  [
-            '情侣6图.png'
+        common_list = [
+            'cheer.png',
+            '小象.png',
+            '眠.png',
+            '白底简约微信头像模板.png',
+            '简约白底头像cheer.png',
+            '头像白底1.0.png',
+            '普通白底模板.png',
+            '白底头像框2.png',
+            '白底简约立体头像模板(weeks).png'
         ]
         return [os.path.join(self.data_root, "template", name) for name in common_list]
+
+    @property
+    def couple_template_list(self):
+        common_list = [
+            '情侣6图.png',
+        ]
+        return [os.path.join(self.data_root, "template", name) for name in common_list]
+
+    @property
+    def with_bg_template_list(self):
+        common_list = [
+            '头像模板透明模板文字图片可改.png'
+        ]
+        return [os.path.join(self.data_root, "template", name) for name in common_list]
+
 
     @staticmethod
     def get_dir_names(path):

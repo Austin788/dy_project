@@ -15,9 +15,13 @@ def cmp(x, y):
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/姓氏头像"
-    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜"
-    video_path = "/Users/meitu/Downloads/D81FF6FC-C414-4FDC-AB21-B439E7BCF6E0.MOV"
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼"
+    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜"
+    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜"
+    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜星火炸开"
+    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜屏幕律动"
+    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜屏幕扫描"
+    video_path = "/Users/meitu/Downloads/B8FA0EAC-D4D1-4B45-A4CA-1E553D00163C 2.MOV"
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -42,14 +46,19 @@ if __name__ == "__main__":
     frame_count = 0
     filenames_count = 0
     video_out = None
+    video_count = 0
     while video_cap.isOpened():
         ret, frame = video_cap.read()
         # cv2.imshow("f", frame)
         # cv2.waitKey(1)
         if ret:
-            if frame_count % 88 == 0:
+            # if frame_count % 88 == 0:
+            if frame_count % 94 == 0:
                 if video_out is not None:
                     video_out.release()
+                # video_count += 1
+                # if video_count == 11:
+                #     continue
                 video_out = cv2.VideoWriter(os.path.join(save_dir, filenames[filenames_count][:-4]+".mp4"), video_encoding, video_fps, (width, height))
                 filenames_count += 1
             else:

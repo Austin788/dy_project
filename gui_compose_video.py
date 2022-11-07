@@ -112,6 +112,10 @@ class ComposeVideo(Toplevel):
         self.device_list_box.grid(row=4, column=9, sticky=NSEW, padx=10)
         self.device_list_box.configure(exportselection=False)
 
+        self.text_title = ['这头像太适合我兄弟了']
+        self.text_font = '新青年体.ttf'
+        self.text_position = "CENTER"
+
 
     def select_music(self):
         music_pathes = tk.filedialog.askopenfiles(filetypes=[("Configuration file", "*.mp3")],
@@ -359,11 +363,11 @@ class ComposeVideo(Toplevel):
         new_paramter['effect_paths'] = paramter['effect']
         new_paramter['compose_paths'] = paramter['compose']
         new_paramter['save_path'] = os.path.join(self.dy_data_utils.device_dir, paramter['device_name'], '待发送', paramter['video_save_name'])
-        new_paramter['title_content'] = ['给自己换一个', '姓氏谐音梗头像', '惊艳所有人']
-        new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, '落雪无声黑体.ttf')
+        new_paramter['title_content'] = self.text_title
+        new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, self.text_font)
         new_paramter['text_color'] = (255, 255, 255)
-        new_paramter['title_position'] = "TOP"
-
+        new_paramter['title_position'] = self.text_position
+        print(new_paramter)
         return new_paramter
 
     def export(self):
@@ -412,7 +416,7 @@ class ComposeVideo(Toplevel):
             upload_folder_name = upload_config.get_upload(paramter["device_name"])
             if upload_folder_name is None:
                 msg.showerror("警告", f"设备:{paramter['device_name']} 未定义取图账号！")
-                return
+                # return
 
             offline_folder_path = os.path.join(self.dy_data_utils.upload_dir, upload_folder_name, "未上传")
             if not os.path.exists(offline_folder_path):
