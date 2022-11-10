@@ -131,7 +131,7 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
         os.makedirs(os.path.dirname(save_path))
     video_out = cv2.VideoWriter(save_path, video_encoding, video_fps, video_size)
 
-    if len(title_content) > 0 and os.path.exists(text_font_path) and text_color is not None:
+    if title_content is not None and len(title_content) > 0 and os.path.exists(text_font_path) and text_color is not None:
         text_writer = TextWriter(title_content, text_font_path, text_color)
     else:
         text_writer = None

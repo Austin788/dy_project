@@ -15,13 +15,14 @@ def cmp(x, y):
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼"
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image"
     # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜"
     # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜"
-    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜星火炸开"
+    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜星火炸开"
+    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜星火炸开"
     # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜屏幕律动"
-    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜屏幕扫描"
-    video_path = "/Users/meitu/Downloads/B8FA0EAC-D4D1-4B45-A4CA-1E553D00163C 2.MOV"
+    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜屏幕扫描"
+    video_path = "/Users/meitu/Downloads/225F9E50-5B29-4CA2-BC0D-BFC421BD8488.MOV"
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -52,8 +53,8 @@ if __name__ == "__main__":
         # cv2.imshow("f", frame)
         # cv2.waitKey(1)
         if ret:
-            # if frame_count % 88 == 0:
-            if frame_count % 94 == 0:
+            if frame_count % 88 == 0:
+            # if frame_count % 94 == 0:
                 if video_out is not None:
                     video_out.release()
                 # video_count += 1

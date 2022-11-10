@@ -112,9 +112,12 @@ class ComposeVideo(Toplevel):
         self.device_list_box.grid(row=4, column=9, sticky=NSEW, padx=10)
         self.device_list_box.configure(exportselection=False)
 
-        self.text_title = ['这头像太适合我兄弟了']
-        self.text_font = '新青年体.ttf'
-        self.text_position = "CENTER"
+        # self.text_title = ['这头像太适合我兄弟了']
+        # self.text_font = '新青年体.ttf'
+        # self.text_position = "CENTER"
+        self.text_title = None
+        self.text_font = None
+        self.text_position = None
 
 
     def select_music(self):
@@ -363,10 +366,11 @@ class ComposeVideo(Toplevel):
         new_paramter['effect_paths'] = paramter['effect']
         new_paramter['compose_paths'] = paramter['compose']
         new_paramter['save_path'] = os.path.join(self.dy_data_utils.device_dir, paramter['device_name'], '待发送', paramter['video_save_name'])
-        new_paramter['title_content'] = self.text_title
-        new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, self.text_font)
-        new_paramter['text_color'] = (255, 255, 255)
-        new_paramter['title_position'] = self.text_position
+        if self.text_title is not None:
+            new_paramter['title_content'] = self.text_title
+            new_paramter['text_font_path'] = os.path.join(self.dy_data_utils.fonts_dir, self.text_font)
+            new_paramter['text_color'] = (255, 255, 255)
+            new_paramter['title_position'] = self.text_position
         print(new_paramter)
         return new_paramter
 
@@ -406,6 +410,7 @@ class ComposeVideo(Toplevel):
 
         upload_config = UploadConfig()
 
+        undefined_upload_list = set()
         for paramter in export_paramter_list:
             paramter["device_name"] = export_list_iter.next()
             fun_paramter = self.paramter_convert(paramter)
@@ -415,8 +420,8 @@ class ComposeVideo(Toplevel):
             # 拷贝图片到未上传
             upload_folder_name = upload_config.get_upload(paramter["device_name"])
             if upload_folder_name is None:
-                msg.showerror("警告", f"设备:{paramter['device_name']} 未定义取图账号！")
-                # return
+                undefined_upload_list.add(paramter["device_name"])
+                continue
 
             offline_folder_path = os.path.join(self.dy_data_utils.upload_dir, upload_folder_name, "未上传")
             if not os.path.exists(offline_folder_path):
@@ -432,6 +437,9 @@ class ComposeVideo(Toplevel):
             for image_path in paramter['image']:
                 if os.path.basename(image_path) not in upload_exists_filenames:
                     shutil.copy(image_path, os.path.join(offline_folder_path, os.path.basename(image_path)))
+
+        if len(undefined_upload_list) > 0:
+            msg.showerror("警告", f"设备:{list(undefined_upload_list)} 未定义取图账号！")
 
         msg.showinfo("提示", "视频生成成功！")
         self.destroy()

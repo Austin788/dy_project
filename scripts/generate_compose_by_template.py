@@ -171,8 +171,8 @@ def common_generate(template_list, image_list, save_dir):
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Downloads/save3"
-    save_dir = "/Users/meitu/Downloads/save3"
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/用所选项目新建的文件夹 10"
+    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/用所选项目新建的文件夹 10"
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
