@@ -2,10 +2,12 @@ import os
 import cv2
 import json
 import math
+import time
 import datetime
 import slugify
 import numpy as np
 from data_util import *
+import shutil
 import scripts.image_aug as image_op
 
 
@@ -125,11 +127,15 @@ def common_generate(template_list, image_list, save_dir):
         boxes = data['boxes']
         split_image_list = chunk_list(image_list, image_num)
 
+        current_save_dir = os.path.join(save_dir, os.path.splitext(os.path.basename(template_path))[0])
+        if not os.path.exists(current_save_dir):
+            os.makedirs(current_save_dir)
+        shutil.copy(template_path, os.path.join(current_save_dir, "模板示例.PNG"))
 
-        for current_image_list in split_image_list:
-            output = compose_mask_image(template_image, current_image_list, boxes)
-            # print(os.path.join(save_dir, "zzzzzzz_" + slugify.slugify(str(datetime.datetime.now())) + ".jpg"))
-            cv2.imwrite(os.path.join(save_dir, "zzzzzzz_" + slugify.slugify(str(datetime.datetime.now())) + ".jpg"), output)
+        for current_image_path in split_image_list:
+            output = compose_mask_image(template_image, current_image_path, boxes)
+
+            cv2.imwrite(os.path.join(current_save_dir, os.path.basename(current_image_path[0])), output)
             # cv2.imshow("mask", mask)
             # # cv2.imshow("image_compose", image_compose)
             # # cv2.imshow("template_image", template_image)
@@ -168,14 +174,28 @@ def common_generate(template_list, image_list, save_dir):
 #                     cv2.waitKey(-1)
 
 
+def copy_rename_image(image_list, image_save_dir, use_image_group_num=False):
+    new_image_list = []
+    for image_path in image_list:
+        image_md5 = md5(image_path)
+
+        if not os.path.exists(image_save_dir):
+            os.makedirs(image_save_dir)
+
+        if use_image_group_num:
+            filename = os.path.splitext(os.path.basename(image_path))[0]
+            save_name = f"{filename.split('_')[0]}_{filename.split('_')[1]}_{image_md5}"
+        else:
+            save_name = f"{group_num}_{i + 1}_{image_md5}"
+        save_path = os.path.join(image_save_dir, f"{save_name}.jpg")
+        shutil.copy(image_path, save_path)
+        new_image_list.append(save_path)
+    return new_image_list
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/用所选项目新建的文件夹 10"
-    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/用所选项目新建的文件夹 10"
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像_分组"
+    use_image_group_num = True
 
     image_list = []
     for name in os.listdir(image_dir):
@@ -186,6 +206,9 @@ if __name__ == "__main__":
     image_list.sort()
     print(image_list)
 
-    data_utils = DYDataUtils()
-    common_generate(data_utils.common_template_list, image_list, save_dir)
+    data_utils = DYDataUtils(data_root="/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/")
+
+    if os.path.normcase(image_dir) != os.path.normcase(data_utils.image_dir):
+        image_list = copy_rename_image(image_list, data_utils.image_dir, use_image_group_num)
+    common_generate(data_utils.common_template_list, image_list, data_utils.compose_dir)
     # with_bg_generate(data_utils.with_bg_template_list, image_list, save_dir)

@@ -65,46 +65,46 @@ def make_config(template_path, template_mask_path):
         key = cv2.waitKey(-1)
         image_indexes.append(int(key) - 49)
 
-    with open(template_path[:-4]+".config", "w") as f:
-        data = {}
-        data['img_num'] = len(set(image_indexes))
-        blend = []
-
-        # normal
-        boxes = []
-        boxes.append({"image_index": 0, "box": [0, 0, template.shape[1] - 1, template.shape[0] - 1],
-                      "operate": {"bright": {"gamma": 0.6}, "blur": {"kernel_size": 3}}})
-        blend.append({"blend_mode": "normal",
-                      "boxes": boxes})
-
-        # template
-        blend.append({"blend_mode": "transparent_add",
-                      "opacity": 0.7})
-
-        # mask add
-        boxes = []
-        for image_index, box in zip(image_indexes, boxes_new):
-
-            boxes.append({"box": box, "image_index": image_index})
-        blend.append({"blend_mode": "mask_add",
-                      "boxes": boxes})
-
-        data['blend'] = blend
-        json.dump(data, f, indent=4)
-
     # with open(template_path[:-4]+".config", "w") as f:
     #     data = {}
     #     data['img_num'] = len(set(image_indexes))
+    #     blend = []
+    #
+    #     # normal
+    #     boxes = []
+    #     boxes.append({"image_index": 0, "box": [0, 0, template.shape[1] - 1, template.shape[0] - 1],
+    #                   "operate": {"bright": {"gamma": 0.6}, "blur": {"kernel_size": 3}}})
+    #     blend.append({"blend_mode": "normal",
+    #                   "boxes": boxes})
+    #
+    #     # template
+    #     blend.append({"blend_mode": "transparent_add",
+    #                   "opacity": 0.7})
+    #
+    #     # mask add
     #     boxes = []
     #     for image_index, box in zip(image_indexes, boxes_new):
-    #         boxes.append({"box": box, "image_index": image_index})
-    #     data['boxes'] = boxes
     #
+    #         boxes.append({"box": box, "image_index": image_index})
+    #     blend.append({"blend_mode": "mask_add",
+    #                   "boxes": boxes})
+    #
+    #     data['blend'] = blend
     #     json.dump(data, f, indent=4)
 
+    with open(template_path[:-4]+".config", "w") as f:
+        data = {}
+        data['img_num'] = len(set(image_indexes))
+        boxes = []
+        for image_index, box in zip(image_indexes, boxes_new):
+            boxes.append({"box": box, "image_index": image_index})
+        data['boxes'] = boxes
+
+        json.dump(data, f, indent=4)
+
 if __name__ == "__main__":
-    template_path = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/template/头像模板透明模板文字图片可改.png"
-    template_box_path = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/template/头像模板透明模板文字图片可改_box.png"
+    template_path = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/template/简约白底头像cheer.png"
+    template_box_path = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/template/简约白底头像cheer_box.png"
     with_bg = True
 
     make_config(template_path, template_box_path)

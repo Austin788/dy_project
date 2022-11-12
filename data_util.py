@@ -50,7 +50,6 @@ class DYDataUtils():
             '眠.png',
             '白底简约微信头像模板.png',
             '简约白底头像cheer.png',
-            '头像白底1.0.png',
             '普通白底模板.png',
             '白底头像框2.png',
             '白底简约立体头像模板(weeks).png'
@@ -134,10 +133,17 @@ class DYDataUtils():
             return 1
         return max(group_list) + 1
 
+
 def md5(file_path):
     file = open(file_path, "rb")
     md = hashlib.md5()
     md.update(file.read())
+    res1 = md.hexdigest()
+    return res1
+
+
+def list_md5(obj_list):
+    md = hashlib.md5("".join(obj_list).encode("utf-8"))
     res1 = md.hexdigest()
     return res1
 
@@ -169,6 +175,14 @@ def chunks(l, n):
    """Yield successive n-sized chunks from l."""
    for i in range(0, len(l), n):
         yield l[i:i + n]
+
+
+def is_image(filename):
+    if str.lower(os.path.splitext(filename)[-1]) in ['.jpg', '.jpeg', '.png']:
+        return True
+    else:
+        return False
+
 
 if __name__ == "__main__":
     data_root = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data"

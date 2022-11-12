@@ -102,8 +102,13 @@ class TextWriter():
         return cv2.cvtColor(np.array(pilimg), cv2.COLOR_RGB2BGR)
 
 
-def generate_single_video(music_path, stuck_points_path, video_path, image_paths, effect_paths, compose_paths,
-                          save_path, title_content=None, text_font_path=None, text_color=None, title_position=None):
+def static_image_to_video(image_path, frame_num):
+    image = cv2.imread(image_path)
+    return [image] * frame_num
+
+
+def generate_single_video(music_path, stuck_points_path, video_path=None, image_paths=None, effect_paths=None, compose_paths=None,
+                          save_path=None, title_content=None, text_font_path=None, text_color=None, title_position=None):
     # video_size = video_properties['video_size']  # （宽、高）
     # video_fps = video_properties['video_fps']
     # video_encoding = video_properties['video_encoding']
@@ -115,7 +120,7 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
     video_encoding = cv2.VideoWriter_fourcc(*'XVID')
     video_background_color = (0, 0, 0)
 
-    if os.path.exists(video_path):
+    if video_path is not None and os.path.exists(video_path):
         stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths) * 2 + 1)
     else:
         stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths) * 2)
@@ -138,27 +143,23 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
 
     # part one
     # 无开头素材视频
-    if video_path == '':
-        stuck_points.insert(0, 0)
+    if video_path is not None and os.path.exists(video_path):
+        part_one_duration = stuck_points[0]
+        part_one_frames_num = int(part_one_duration * video_fps)
 
-    part_one_duration = stuck_points[0]
-    part_one_frames_num = int(part_one_duration * video_fps)
-    part_one_frames = read_video(video_path)
+        part_one_frames, _ = read_video(video_path, -1, part_one_frames_num)
 
-    # 视频太短进行插针处理
-    if len(part_one_frames) < part_one_frames_num:
-        part_one_frames = video_frame_interpolation(part_one_frames, part_one_frames_num)
-
-    frames_start_id = random.randint(0, len(part_one_frames) - part_one_frames_num)
-    part_one_frames = part_one_frames[frames_start_id:frames_start_id + part_one_frames_num]
-    for frame in part_one_frames:
-        frame_out = adjust_frame(background_image.copy(), frame)
-        if text_writer is not None:
-            frame_out = text_writer.add_title_text(frame_out, title_position)
-        video_out.write(np.uint8(frame_out))
+        for frame in part_one_frames:
+            frame_out = adjust_frame(background_image.copy(), frame)
+            if text_writer is not None:
+                frame_out = text_writer.add_title_text(frame_out, title_position)
+            video_out.write(np.uint8(frame_out))
 
     # part two
-    frames_start_id = 0
+    frames_start_id = -1
+    if effect_paths is None:
+        effect_paths = image_paths
+
     for image_id in range(len(image_paths)):
         source_image_path = image_paths[image_id]
         effect_video_path = effect_paths[image_id]
@@ -167,20 +168,17 @@ def generate_single_video(music_path, stuck_points_path, video_path, image_paths
         # part two-1
         part_two_duration_1 = stuck_points[image_id * 2 + 1] - stuck_points[image_id * 2]
         part_two_frame_num_1 = int(part_two_duration_1 * video_fps)
-        part_two_frames_1 = read_video(effect_video_path)
-        # 视频太短进行插针处理
-        if len(part_two_frames_1) < part_two_frame_num_1:
-            part_two_frames_1 = video_frame_interpolation(part_two_frames_1, part_two_frame_num_1)
-        # elif (len(part_two_frames_1) // part_two_frame_num_1) > 2: # 效果视频太长，只能截取一小部分，效果展现不完整
-        #     part_two_frames_1 = video_frame_extract(part_two_frames_1, part_two_frame_num_1)
-        # 使得一个视频内的特效视频截取的开始位置一致，视频看起来比较统一
-        if frames_start_id == 0:
-            frames_start_id = random.randint(0, len(part_two_frames_1) - part_two_frame_num_1)
-        part_two_frames_1 = part_two_frames_1[frames_start_id:frames_start_id + part_two_frame_num_1]
+
+        ext = str.lower(os.path.splitext(effect_video_path)[-1])
+        if ext in ['.mp4', '.mov', '.avi']:
+            part_two_frames_1, frames_start_id = read_video(effect_video_path, frames_start_id, part_two_frame_num_1)
+        elif ext in ['.jpg', '.jpeg', '.png']:
+            part_two_frames_1 = static_image_to_video(source_image_path, part_two_frame_num_1)
+
         for frame in part_two_frames_1:
             frame_out = adjust_frame(background_image.copy(), frame)
             # 无开头素材视频时，文字标题则添加在第一张图片的效果上
-            if image_id == 0 and len(part_one_frames) == 0:
+            if image_id == 0 and (video_path is None or not os.path.exists(video_path)):
                 if text_writer is not None:
                     frame_out = text_writer.add_title_text(frame_out, title_position)
             video_out.write(np.uint8(frame_out))
@@ -232,6 +230,7 @@ def set_save_path(save_path, music_path, video_path, image_paths, id):
 def add_music_to_video(video_path, music_path):
     my_clip = VideoFileClip(video_path)
     audio_background = AudioFileClip(music_path)
+    audio_background = audio_background.subclip(0, my_clip.duration)
     final_clip = my_clip.set_audio(audio_background)
     tmp_path = os.path.join(os.path.abspath("."), 'tmp.mp4')
     final_clip.write_videofile(tmp_path, audio_codec='aac')
@@ -253,7 +252,7 @@ def adjust_frame(background, frame):
     return background
 
 
-def read_video(video_path):
+def read_video(video_path, frames_start_id, need_frame_num):
     video_cap = cv2.VideoCapture(video_path)
     video_frames = []
     while video_cap.isOpened():
@@ -262,7 +261,18 @@ def read_video(video_path):
             video_frames.append(frame)
         else:
             break
-    return video_frames
+
+    # 视频太短进行插针处理
+    if len(video_frames) < need_frame_num:
+        video_frames = video_frame_interpolation(video_frames, need_frame_num)
+    # elif (len(part_two_frames_1) // part_two_frame_num_1) > 2: # 效果视频太长，只能截取一小部分，效果展现不完整
+    #     part_two_frames_1 = video_frame_extract(part_two_frames_1, part_two_frame_num_1)
+    # 使得一个视频内的特效视频截取的开始位置一致，视频看起来比较统一
+    if frames_start_id < 0 or frames_start_id >= len(video_frames):
+        frames_start_id = random.randint(0, len(video_frames) - need_frame_num)
+    video_frames = video_frames[frames_start_id:frames_start_id + need_frame_num]
+
+    return video_frames, frames_start_id
 
 
 def video_frame_extract(video_frames, expect_frames_num):
@@ -292,18 +302,13 @@ if __name__ == '__main__':
             '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_15_a1c66aad30a94f7737f55bad66caa7c4.jpg',
             '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_14_ca0af621aabe36ab8cf3fe43619579cc.jpg',
             '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image/胖子奥特曼/1_13_0e01c75c64e4a3034d3105d0e33eb3f1.jpg'],
-                'effect_paths': [
-                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_17_51ef0edc2f97853ff5d44ace8c7123de.mp4',
-                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_16_f0558b245fbaf104d3fb7d6786264681.mp4',
-                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_15_a1c66aad30a94f7737f55bad66caa7c4.mp4',
-                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_14_ca0af621aabe36ab8cf3fe43619579cc.mp4',
-                    '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜/1_13_0e01c75c64e4a3034d3105d0e33eb3f1.mp4'],
                 'compose_paths': [
                     '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_17_51ef0edc2f97853ff5d44ace8c7123de.jpg',
                     '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_16_f0558b245fbaf104d3fb7d6786264681.jpg',
                     '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_15_a1c66aad30a94f7737f55bad66caa7c4.jpg',
                     '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_14_ca0af621aabe36ab8cf3fe43619579cc.jpg',
                     '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_compose/合成_4/1_13_0e01c75c64e4a3034d3105d0e33eb3f1.jpg'],
+
                 'save_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/device/000000导出测试/待发送/这头像太适合你兄弟了.mp3__51ef0edc2ff0558b245fa1c66aad30ca0af621aa_3D运镜_合成_4.mp4',
                 'title_content': ['这头像太适合我兄弟了'],
                 'text_font_path': '/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/fonts/新青年体.ttf',

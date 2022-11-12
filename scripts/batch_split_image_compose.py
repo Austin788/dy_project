@@ -8,14 +8,16 @@ from generate_video import TextWriter
 
 
 if __name__ == "__main__":
-    dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/用所选项目新建的文件夹 10"
-    image_dir_name = "姐妹头像"
+    dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像_分组"
+    image_dir_name = "亲子头像"
     compose_name = "合成"
-    image_num = 11
+    image_num = 186
+    use_image_group_num = True
 
-    filenames = os.listdir(dir)
-    if ".DS_Store" in filenames:
-        filenames.remove(".DS_Store")
+    filenames = []
+    for filename in os.listdir(dir):
+        if os.path.splitext(filename)[-1] in ['.jpg', '.png', '.jpeg']:
+            filenames.append(filename)
     filenames.sort()
 
     dy_data_utils = DYDataUtils(data_root="/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast")
@@ -29,7 +31,11 @@ if __name__ == "__main__":
         if not os.path.exists(image_save_dir):
             os.makedirs(image_save_dir)
 
-        save_name = f"{group_num}_{i + 1}_{image_md5}"
+        if use_image_group_num:
+            filename = os.path.splitext(os.path.basename(image_path))[0]
+            save_name = f"{filename.split('_')[0]}_{filename.split('_')[1]}_{image_md5}"
+        else:
+            save_name = f"{group_num}_{i + 1}_{image_md5}"
 
         shutil.copy(image_path, os.path.join(image_save_dir, f"{save_name}.jpg"))
         for j in range(1, len(filenames) // image_num):
