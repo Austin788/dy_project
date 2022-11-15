@@ -112,12 +112,13 @@ class ComposeVideo(Toplevel):
         self.device_list_box.grid(row=4, column=9, sticky=NSEW, padx=10)
         self.device_list_box.configure(exportselection=False)
 
-        # self.text_title = ['这头像太适合我兄弟了']
-        # self.text_font = '新青年体.ttf'
-        # self.text_position = "CENTER"
-        self.text_title = None
-        self.text_font = None
-        self.text_position = None
+        self.text_title = ['这头像太适合我兄弟了']
+        self.text_font = '新青年体.ttf'
+        self.text_position = "CENTER"
+        self.shuffle_image = True
+        # self.text_title = None
+        # self.text_font = None
+        # self.text_position = None
 
 
     def select_music(self):
@@ -267,6 +268,9 @@ class ComposeVideo(Toplevel):
         image_list = self.get_select_image_list()
         if len(image_list) <= 0:
             return []
+
+        if self.shuffle_image:
+            [random.shuffle(item) for item in image_list]
 
         effect_list = self.get_select_effect_list()
         if len(effect_list) <= 0:

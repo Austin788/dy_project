@@ -252,7 +252,7 @@ def adjust_frame(background, frame):
     return background
 
 
-def read_video(video_path, frames_start_id, need_frame_num):
+def read_video(video_path, frames_start_id, need_frame_num, skip_frame_num=15):
     video_cap = cv2.VideoCapture(video_path)
     video_frames = []
     while video_cap.isOpened():
@@ -269,7 +269,10 @@ def read_video(video_path, frames_start_id, need_frame_num):
     #     part_two_frames_1 = video_frame_extract(part_two_frames_1, part_two_frame_num_1)
     # 使得一个视频内的特效视频截取的开始位置一致，视频看起来比较统一
     if frames_start_id < 0 or frames_start_id >= len(video_frames):
-        frames_start_id = random.randint(0, len(video_frames) - need_frame_num)
+        if skip_frame_num < len(video_frames) - need_frame_num:
+            frames_start_id = random.randint(skip_frame_num, len(video_frames) - need_frame_num)
+        else:
+            frames_start_id = random.randint(0, len(video_frames) - need_frame_num)
     video_frames = video_frames[frames_start_id:frames_start_id + need_frame_num]
 
     return video_frames, frames_start_id

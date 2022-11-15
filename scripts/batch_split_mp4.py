@@ -16,13 +16,22 @@ def cmp(x, y):
 
 if __name__ == "__main__":
     image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image"
-    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜"
-    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜"
-    # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜星火炸开"
+
+    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜星火炸开"
+    video_path = "/Users/meitu/Downloads/CB0CC170-F59E-44FE-85C8-234F3CC27D14.MOV"
+
+    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/摇摆运镜"
+    video_path = "/Users/meitu/Downloads/1622E6B2-44E2-4EC6-AE2C-0B9001143783.MOV"
+
+    save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜"
+    video_path = "/Users/meitu/Downloads/445B95D3-C093-49A3-A967-A5C68ABF4107.MOV"
+
     save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜星火炸开"
+    video_path = "/Users/meitu/Downloads/FD39ADBA-212F-4B94-BF54-61083C7C1C89.MOV"
+
     # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜屏幕律动"
     # save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image_effects/3D运镜屏幕扫描"
-    video_path = "/Users/meitu/Downloads/225F9E50-5B29-4CA2-BC0D-BFC421BD8488.MOV"
+
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -53,8 +62,8 @@ if __name__ == "__main__":
         # cv2.imshow("f", frame)
         # cv2.waitKey(1)
         if ret:
-            if frame_count % 88 == 0:
-            # if frame_count % 94 == 0:
+            # if frame_count % 88 == 0:
+            if frame_count % 94 == 0:
                 if video_out is not None:
                     video_out.release()
                 # video_count += 1
@@ -64,6 +73,7 @@ if __name__ == "__main__":
                 filenames_count += 1
             else:
                 video_out.write(frame)
+
             frame_count += 1
 
         else:
