@@ -40,6 +40,14 @@ class NewImageSimilarity(ImageSimilarity):
 #     return path_list
 
 
+def fill_str2_int(str_num):
+    value = 0
+    for i, v in enumerate(str_num):
+        base = pow(10, max(len(str_num) - i - 1, 0))
+        value += (base * int(v))
+
+    return value
+
 def get_csv(filenames, save_path):
     path_list = []
     with open(save_path, "w") as f:
@@ -111,17 +119,18 @@ def similarity_remove(path, threadhold = 0.845):
             if j > i and value > threadhold:
 
 
-                print(f"{path_list[i]} and {path_list[j]} similarity > threadhold")
+                print(f"{os.path.basename(path_list[i])} and {os.path.basename(path_list[j])} similarity > threadhold")
                 # try:
                 if os.path.exists(path_list[i]) and os.path.exists(path_list[j]):
-                    image1 = cv2.imread(path_list[i])
-                    image2 = cv2.imread(path_list[j])
-                    image1 = cv2.resize(image1, (600, 600))
-                    image2 = cv2.resize(image2, (600, 600))
-                    cv2.imshow("image1", image1)
-                    cv2.imshow("image2", image2)
-                    key = cv2.waitKey()
-                    print(key)
+                    # image1 = cv2.imread(path_list[i])
+                    # image2 = cv2.imread(path_list[j])
+                    # image1 = cv2.resize(image1, (600, 600))
+                    # image2 = cv2.resize(image2, (600, 600))
+                    # # cv2.imshow("image1", image1)
+                    # # cv2.imshow("image2", image2)
+                    # # key = cv2.waitKey(-1)
+                    key = 13
+                    # print(key)
 
                     if key == 2 and os.path.exists(path_list[i]):
                         # shutil.rmtree(os.path.dirname(path_list[i]))
@@ -134,6 +143,16 @@ def similarity_remove(path, threadhold = 0.845):
                         # 删除图片
                         print("os remove:", path_list[j])
                         os.remove(path_list[j])
+
+                    elif key==13:
+                        # 如果按回车键按照前缀大小，来删除输出
+                        if fill_str2_int(os.path.basename(path_list[i]).split('_')[0]) < fill_str2_int(os.path.basename(path_list[j]).split('_')[0]):
+                            print("os remove:", path_list[i])
+                            os.remove(path_list[i])
+                        else:
+                            print("os remove:", path_list[j])
+                            os.remove(path_list[j])
+
 
                 # except:
                 #     print("happen except!!", path_list[i], path_list[j])
@@ -198,6 +217,6 @@ def group_by_similarity(path, save_dir, threadhold = 0.9):
 
 
 if __name__ == "__main__":
-    group_by_similarity("/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像",
-                        "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像_分组")
-    # similarity_remove("/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像", threadhold=0.95)
+    # group_by_similarity("/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像",
+    #                     "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像_分组")
+    similarity_remove("/Users/meitu/Documents/midlife_crisis/project/dy_project/data/素材库/llqt/2023_02_06_14_43_55", threadhold=0.95)

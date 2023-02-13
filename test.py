@@ -1,148 +1,33 @@
-import sys
+import os
+import cv2
+from tqdm import tqdm
 
+if __name__ == "__main__":
+    dir = "/Users/meitu/Downloads/test_bug/"
+    save_dir = "/Users/meitu/Downloads/test_bug_small/"
 
-def combinations(iterable, r, repeat_times=sys.maxsize, max_num=2000):
-    key_count = {}
-    num = 0
-    pool = tuple(iterable)
-    n = len(iterable)
-    if r > n:
-        return
-    indices = list(range(r))
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
-    legal_flag = True
-    for i in indices:
-        if pool[i] in key_count and key_count[pool[i]] >= repeat_times:
-            legal_flag = False
-            break
-    if legal_flag:
-        for i in indices:
-            if pool[i] not in key_count:
-                key_count[pool[i]] = 0
-            key_count[pool[i]] += 1
-        if num >= max_num:
-            return
-        num += 1
-        yield tuple(pool[i] for i in indices)
+    max_size = 800
+    for filename in os.listdir(dir):
+        if str.lower(os.path.splitext(filename)[-1]) not in ['.jpg', '.jpeg', '.png', '.heic']:
+            continue
 
-    while True:
-        for i in reversed(range(r)):
-            if indices[i] != i + n - r:
-                break
+        image = cv2.imread(os.path.join(dir, filename))
+        if image is None:
+            print(filename)
+            continue
+        if image.shape[0] > image.shape[1]:
+            image_width = max_size * image.shape[1] / image.shape[0]
+            image_height = max_size
+
         else:
-            return
+            image_height = image.shape[0] / (image.shape[1] / max_size)
+            image_width = max_size
 
-        indices[i] += 1
-        for j in range(i + 1, r):
-            indices[j] = indices[j - 1] + 1
+        resize_image = cv2.resize(image, (int(image_width), int(image_height)))
+        # resize_image = cv2.resize(image, (0, 0), fx=1.5, fy=1.2, interpolation=cv2.INTER_CUBIC)
 
-        legal_flag = True
-        for k in indices:
-            if pool[k] in key_count and key_count[pool[k]] >= repeat_times:
-                legal_flag = False
-                break
+        cv2.imwrite(os.path.join(save_dir, filename+".jpg"), resize_image)
 
-        if legal_flag:
-            for k in indices:
-                if pool[k] not in key_count:
-                    key_count[pool[k]] = 0
-                key_count[pool[k]] += 1
-            if num >= max_num:
-                return
-            num += 1
-            yield tuple(pool[i] for i in indices)
-
-
-def permutations(iterable, r=None):
-    pool = tuple(iterable)
-    n = len(iterable)
-    r = n if r is None else r
-    if r > n:
-        return
-    indices = list(range(n))
-    cycles = list(range(n, n - r, -1))
-    yield tuple(pool[i] for i in indices[:r])
-    while n:
-        for i in reversed(range(r)):
-            cycles[i] -= 1
-            if cycles[i] == 0:
-                indices[i:] = indices[i + 1:] + indices[i:i + 1]
-                cycles[i] = n - i
-            else:
-                j = cycles[i]
-                indices[i], indices[-j] = indices[-j], indices[i]
-                yield tuple(pool[i] for i in indices[:r])
-                break
-        else:
-            return
-
-
-def permutations(iterable, r=None, repeat_times=sys.maxsize, max_num=2000):
-    key_count = {}
-    num = 0
-    pool = tuple(iterable)
-    n = len(iterable)
-    r = n if r is None else r
-    if r > n:
-        return
-    indices = list(range(n))
-    cycles = list(range(n, n - r, -1))
-
-    legal_flag = True
-    for i in indices[:r]:
-        if pool[i] in key_count and key_count[pool[i]] >= repeat_times:
-            legal_flag = False
-            break
-    if legal_flag:
-        for i in indices[:r]:
-            if pool[i] not in key_count:
-                key_count[pool[i]] = 0
-            key_count[pool[i]] += 1
-        if num >= max_num:
-            return
-        num += 1
-        yield tuple(pool[i] for i in indices[:r])
-
-    while n:
-        for i in reversed(range(r)):
-            cycles[i] -= 1
-            if cycles[i] == 0:
-                indices[i:] = indices[i + 1:] + indices[i:i + 1]
-                cycles[i] = n - i
-            else:
-                j = cycles[i]
-                indices[i], indices[-j] = indices[-j], indices[i]
-
-                legal_flag = True
-                for k in indices[:r]:
-                    if pool[k] in key_count and key_count[pool[k]] >= repeat_times:
-                        legal_flag = False
-                        break
-
-                if legal_flag:
-                    for k in indices[:r]:
-                        if pool[k] not in key_count:
-                            key_count[pool[k]] = 0
-                        key_count[pool[k]] += 1
-                    if num >= max_num:
-                        return
-                    num += 1
-                    yield tuple(pool[i] for i in indices[:r])
-                break
-    else:
-            return
-
-
-# if __name__=='__main__':
-#     pl=list(range(8))
-#     r=6
-#     plist = list(permutations(pl, r, repeat_times=20000,))
-#     print(f'排列数的个数为{len(plist)}。')
-#     print('它们是:\n',plist)
-
-if __name__ == '__main__':
-    cl = list(range(42))
-    r = 6
-    clist = list(combinations(cl, r, max_num=2000))
-    print(f'组合数的个数为{len(clist)}。')
-    print('它们是:\n', clist)

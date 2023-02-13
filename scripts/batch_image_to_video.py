@@ -52,14 +52,19 @@ def image_list_to_compose_list(image_list, compose_name):
 if __name__ == "__main__":
     data_utils = DYDataUtils("/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/")
     image_dirs = data_utils.image_dir
-    music_path = os.path.join(data_utils.music_dir, "@艺馨不老张创作的原声-艺馨不老张.mp3")
+    music_path = os.path.join(data_utils.music_dir, "2秒一张11张图.mp3")
 
-    title_content = ['一组可爱的亲子头像']
+    title_content = ['我的女儿 希望你善良中带点锋芒']
     font = os.path.join(data_utils.fonts_dir, '新青年体.ttf')
-    text_color = (255, 255, 255)
+    text_color = (0, 0, 0)
     title_position = 'TOP'
 
-    image_groups = image_to_group(image_dirs, each_group_img_num=6)
+    # title_content = None
+    # font = None
+    # text_color = (0, 255, 255)
+    # title_position = 'TOP'
+
+    image_groups = image_to_group(image_dirs, each_group_img_num=11)
 
     compose_lists = os.listdir(data_utils.compose_dir)
 
@@ -79,10 +84,12 @@ if __name__ == "__main__":
                 compose_list = image_list_to_compose_list(image_list, compose_name)
 
                 parmater = {'music_path': music_path, 'stuck_points_path': music_path.replace(".mp3", ".json"), 'image_paths': image_list, 'compose_paths': compose_list,
-                        'save_path': save_path, 'title_content': title_content, 'text_font_path': font, 'text_color': text_color, 'title_position': title_position}
+                        'save_path': save_path, 'title_content': title_content, 'text_font_path': font, 'text_color': text_color, 'title_position': title_position,
+                            'video_type': 'slide'}
 
                 print(parmater)
-                generate_single_video(**parmater)
+                generate_video_image_compose_compose(**parmater)
+                exit(0)
                 count += 1
     except KeyboardInterrupt:
         os.remove(save_path)

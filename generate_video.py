@@ -107,8 +107,138 @@ def static_image_to_video(image_path, frame_num):
     return [image] * frame_num
 
 
+def percent_func_gen(a, b, time, n, mode):
+    """
+    高次多项式计算函数生成器
+    :param a: 起始百分比（如：0.25）
+    :param b: 结束百分比
+    :param time: 动画持续时间
+    :param n: 多项式次数
+    :param mode: faster（越来越快）、slower（越来越慢）
+    :return: 每个时刻到达百分比的计算函数
+    """
+    if mode == "slower":
+        a, b = b, a
+    delta = abs(a - b)
+    sgn = 1 if b - a > 0 else (-1 if b - a < 0 else 0)
+
+    def percent_calc(ti):
+        if mode == "slower":
+            ti = time - ti
+        return sgn * delta / (time ** n) * (ti ** n) + a
+
+    return percent_calc
+
+def static_image_to_video_slid(image_path1, image_path2, frame_num, slide_frame=15):
+    if frame_num < slide_frame:
+        slide_frame = frame_num
+
+    '''读入图像'''
+    img1 = cv2.imread(image_path1)
+    img2 = cv2.imread(image_path2)
+    rows, cols = img1.shape[:2]
+
+    '''画布准备'''
+    if img1.shape[0] != img2.shape[0] or img1.shape[1] != img2.shape[1]:
+        max_width = max(img1.shape[1], img2.shape[1])
+        max_height = max(img1.shape[0], img2.shape[0])
+        img1 = cv2.resize(img1, (max_width, max_height))
+        img2 = cv2.resize(img2, (max_width, max_height))
+
+    img = np.hstack([img1, img2])
+
+    '''特效展示'''
+    load_f = 20
+    tim = slide_frame / 15 * 0.3
+    percent_func = percent_func_gen(a=0, b=1, time=tim, n=2, mode="faster")
+
+    frames = []
+    for t in range(int(tim * 1000) // load_f + 1):
+        percent = percent_func(t * load_f / 1000)
+        x = int(percent * cols)
+        M = np.float32([[1, 0, -x], [0, 1, 0]])
+        res = cv2.warpAffine(img, M, (rows, cols))
+        frames.append(res)
+
+    return [img1] * (frame_num - len(frames)) + frames
+
+
+
+def generate_video_image_compose_compose(music_path, stuck_points_path, video_path=None, image_paths=None, effect_paths=None, compose_paths=None,
+                          save_path=None, title_content=None, text_font_path=None, text_color=None, title_position=None, video_type=None):
+    # video_size = video_properties['video_size']  # （宽、高）
+    # video_fps = video_properties['video_fps']
+    # video_encoding = video_properties['video_encoding']
+    # video_background_color = video_properties['video_background_color']
+
+
+    video_size = (1080, 1920)  # （宽、高）
+    video_fps = 30
+    video_encoding = cv2.VideoWriter_fourcc(*'XVID')
+    video_background_color = (0, 0, 0)
+
+    stuck_points = read_stuck_points(stuck_points_path, points_num=len(image_paths))
+
+
+    # 设置统一的背景图片
+    background_image = np.zeros((video_size[1], video_size[0], 3))
+    for RGB_id, RGB_value in enumerate(video_background_color):
+        background_image[:, :, RGB_id] = RGB_value
+
+    # 视频输出流
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))
+    video_out = cv2.VideoWriter(save_path, video_encoding, video_fps, video_size)
+
+    if title_content is not None and len(title_content) > 0 and os.path.exists(text_font_path) and text_color is not None:
+        text_writer = TextWriter(title_content, text_font_path, text_color)
+    else:
+        text_writer = None
+
+
+    # part two
+    frames_start_id = -1
+    if effect_paths is None:
+        effect_paths = image_paths
+
+    for image_id in range(len(image_paths)):
+        source_image_path = image_paths[image_id]
+        effect_video_path = effect_paths[image_id]
+        compose_image_path = compose_paths[image_id]
+
+        # part two-1
+        if image_id >= 1:
+            part_two_duration_1 = stuck_points[image_id] - stuck_points[image_id - 1]
+        else:
+            part_two_duration_1 = stuck_points[image_id]
+        part_two_frame_num_1 = int(part_two_duration_1 * video_fps)
+
+        ext = str.lower(os.path.splitext(effect_video_path)[-1])
+        if ext in ['.mp4', '.mov', '.avi']:
+            part_two_frames_1, frames_start_id = read_video(effect_video_path, frames_start_id, part_two_frame_num_1)
+        elif ext in ['.jpg', '.jpeg', '.png']:
+            if video_type == "static":
+                part_two_frames_1 = static_image_to_video(source_image_path, part_two_frame_num_1)
+            elif video_type == "slide":
+                part_two_frames_1 = static_image_to_video_slid(source_image_path, compose_image_path, part_two_frame_num_1)
+
+        for frame in part_two_frames_1:
+            frame_out = adjust_frame(background_image.copy(), frame)
+            # 无开头素材视频时，文字标题则添加在第一张图片的效果上
+            if image_id == 0 and (video_path is None or not os.path.exists(video_path)):
+                if text_writer is not None:
+                    frame_out = text_writer.add_title_text(frame_out, title_position)
+            video_out.write(np.uint8(frame_out))
+
+
+    video_out.release()
+    add_music_to_video(save_path, music_path)
+
+    print('video complete!')
+
+
 def generate_single_video(music_path, stuck_points_path, video_path=None, image_paths=None, effect_paths=None, compose_paths=None,
-                          save_path=None, title_content=None, text_font_path=None, text_color=None, title_position=None):
+                          save_path=None, title_content=None, text_font_path=None, text_color=None, title_position=None, video_type=None):
     # video_size = video_properties['video_size']  # （宽、高）
     # video_fps = video_properties['video_fps']
     # video_encoding = video_properties['video_encoding']
@@ -173,7 +303,10 @@ def generate_single_video(music_path, stuck_points_path, video_path=None, image_
         if ext in ['.mp4', '.mov', '.avi']:
             part_two_frames_1, frames_start_id = read_video(effect_video_path, frames_start_id, part_two_frame_num_1)
         elif ext in ['.jpg', '.jpeg', '.png']:
-            part_two_frames_1 = static_image_to_video(source_image_path, part_two_frame_num_1)
+            if video_type == "static":
+                part_two_frames_1 = static_image_to_video(source_image_path, part_two_frame_num_1)
+            elif video_type == "slide":
+                part_two_frames_1 = static_image_to_video_slid(source_image_path, compose_image_path, part_two_frame_num_1)
 
         for frame in part_two_frames_1:
             frame_out = adjust_frame(background_image.copy(), frame)

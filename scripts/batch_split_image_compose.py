@@ -8,7 +8,7 @@ from generate_video import TextWriter
 
 
 if __name__ == "__main__":
-    dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像_分组"
+    dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image"
     image_dir_name = "亲子头像"
     compose_name = "合成"
     image_num = 186

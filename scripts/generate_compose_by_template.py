@@ -194,7 +194,7 @@ def copy_rename_image(image_list, image_save_dir, use_image_group_num=False):
 
 
 if __name__ == "__main__":
-    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/亲子头像_分组"
+    image_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/image"
     use_image_group_num = True
 
     image_list = []
