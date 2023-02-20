@@ -29,26 +29,24 @@ include_sites = ['https://cdn-ali-img-shdiy.shanhutech.cn',
 
 if __name__ == "__main__":
 
-    save_dir = f'/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/神图君0234/'
-    txt_path = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/神图君0234/神图君0234.txt"
-    kouling = "0234"
 
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    txt_path = "/Users/meitu/Documents/midlife_crisis/素材列表/甜七.txt"
 
     with open(txt_path) as f:
         lines = f.readlines()
 
     image_list = [line.strip('\n') for line in lines]
 
-    # sites = get_bussiness_site(lines)
-    # for key, value in sites.items():
-    #     print(key, value)
-    # exit(0)
+    sites = get_bussiness_site(lines)
+    for key, value in sites.items():
+        print(key, value)
+    exit(0)
 
 
-
+    save_dir = f'/Users/meitu/Documents/midlife_crisis/project/dy_project/data_fast/素材库/神图君0234/'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    kouling = "0234"
     filename_url = {}
     count = 0
     url_set = set()

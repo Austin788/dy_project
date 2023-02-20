@@ -13,12 +13,21 @@ class MysqlHelper(object):
         "cursorclass": pymysql.cursors.DictCursor
     }
 
-    cztk_conn_params = {
+    lyqt_cztk_conn_params = {
         'host': '43.142.170.84',
         'port': 3306,
         'user': 'zyf4',
         'passwd': 'zyf18396185253',
         'db': 'dy_img_download',
+        'charset': 'utf8',
+    }
+
+    cztk_conn_params = {
+        'host': '43.142.170.84',
+        'port': 3306,
+        'user': 'dy_img_download3',
+        'passwd': 'zyf18396185253',
+        'db': 'dy_img_download3',
         'charset': 'utf8',
     }
 
@@ -79,8 +88,19 @@ class MysqlHelper(object):
         return lst
 
     # todo 增加数据
-    def insert(self, sql, params):
-        return self.__edit(sql, params)
+    def insert(self, table, params):
+        new_row = {}
+        param = []
+        for key, value in params.items():
+            if value is None:
+                continue
+            new_row[key] = value
+            param.append(value)
+
+        keys = ', '.join(new_row.keys())
+        values = ', '.join(['%s'] * len(new_row))
+        insert_sql = "INSERT INTO {table}({keys}) VALUES({values})".format(table=table, keys=keys, values=values)
+        return self.__edit(insert_sql, param)
 
     # todo 修改数据
     def update(self, sql, params):
@@ -89,6 +109,10 @@ class MysqlHelper(object):
     # todo 删除数据
     def delete(self, sql, params):
         return self.__edit(sql, params)
+
+    def add_expert(self, params):
+
+        self.insert(insert_sql, params)
 
     # todo 写数据操作具体实现，增删改操作都是调用这个方法来实现，这是个私有方法，不允许类外部调用
     def __edit(self, sql, params):

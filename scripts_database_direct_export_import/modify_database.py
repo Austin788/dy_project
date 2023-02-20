@@ -73,10 +73,10 @@ def diff_column():
     # try:
     if True:
         # 查询数据
-        cztk1_mysqlhelper = MysqlHelper(MysqlHelper.cztk_conn_params)
+        cztk1_mysqlhelper = MysqlHelper(MysqlHelper.lyqt_conn_params)
         cztk2_mysqlhelper = MysqlHelper(MysqlHelper.cztk2_conn_params)
 
-        sql1 = "SELECT  TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = 'dy_img_download' ORDER BY TABLE_NAME;"
+        sql1 = "SELECT  TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = 'liyuqutu' ORDER BY TABLE_NAME;"
         result1 = cztk1_mysqlhelper.get_all(sql1, ())
         table_names1 = []
         for row in result1:
@@ -92,8 +92,9 @@ def diff_column():
 
         # todo 打印执行结果
         for table_name in table_names2:
+            # print(table_name)
             if table_name not in table_names1:
-                # print(f'table:{table_name}: need create!')
+                print(f'table:{table_name}: need create!')
                 continue
 
             pass

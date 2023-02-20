@@ -114,9 +114,10 @@ class AddVideo(Toplevel):
             filepath = filepath.name
             if str(filepath).endswith('.mp4'):
                 save_path = os.path.join(save_paths[i % len(save_paths)], save_dir, str(i // len(save_paths))+"_"+koulin+os.path.basename(filepath))
-                # if not os.path.exists(os.path.dirname(save_path)):
-                #     os.makedirs(os.path.dirname(save_path))
-                print(filepath, save_path)
+                if not os.path.exists(os.path.dirname(save_path)):
+                    os.makedirs(os.path.dirname(save_path))
+                shutil.move(filepath, save_path)
+                print(f"move {filepath} to {save_path}")
                 # shutil.move()
 
         msg.showinfo("状态", f"导入成功")
