@@ -39,7 +39,7 @@ class AddVideo(Toplevel):
         tk.Label(self.main_frame, text="快手设备").grid(row=1, column=1)
         tk.Label(self.main_frame, text="抖音设备").grid(row=1, column=2)
 
-        self.ks_dir = "/Users/meitu/同步空间/KS"
+        self.ks_dir = "/Users/meitu/同步空间/视频/KS"
         ks_device_ids = [dirname for dirname in os.listdir(self.ks_dir) if os.path.isdir(os.path.join(self.ks_dir, dirname))]
         self.ks_devices_items = tk.StringVar(value=ks_device_ids)
         self.ks_device_list_box = tk.Listbox(self.main_frame, cursor='arrow', selectborderwidth=2, listvariable=self.ks_devices_items,
@@ -47,7 +47,7 @@ class AddVideo(Toplevel):
         self.ks_device_list_box.grid(row=2, column=1, sticky=NSEW, padx=10)
         self.ks_device_list_box.configure(exportselection=False)
 
-        self.dy_dir = "/Users/meitu/同步空间/DY"
+        self.dy_dir = "/Users/meitu/同步空间/视频/DY"
         dy_device_ids = [dirname for dirname in os.listdir(self.dy_dir) if os.path.isdir(os.path.join(self.dy_dir, dirname))]
         self.dy_devices_items = tk.StringVar(value=dy_device_ids)
         self.dy_device_list_box = tk.Listbox(self.main_frame, cursor='arrow', selectborderwidth=2, listvariable=self.dy_devices_items,
@@ -95,7 +95,7 @@ class AddVideo(Toplevel):
             msg.showinfo("状态", f"请先选择路径！")
             return
 
-        save_dir = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+
 
         save_paths = self.get_box_list(self.dy_device_list_box, self.dy_dir) + \
                      self.get_box_list(self.ks_device_list_box, self.ks_dir)
@@ -106,14 +106,17 @@ class AddVideo(Toplevel):
 
         koulin = self.koulin.get()
         try:
-            koulin = int(koulin)
-            koulin = f"口令{koulin}"
+            koulin = f"口令[{koulin}]"
         except:
             koulin = ""
+
+        save_dir = koulin + "_" + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
         for i, filepath in enumerate(self.video_pathes):
             filepath = filepath.name
             if str(filepath).endswith('.mp4'):
-                save_path = os.path.join(save_paths[i % len(save_paths)], save_dir, str(i // len(save_paths))+"_"+koulin+os.path.basename(filepath))
+                base_filename = os.path.basename(filepath)
+                base_filename = base_filename[base_filename.find("-")+1:]
+                save_path = os.path.join(save_paths[i % len(save_paths)], save_dir, base_filename)
                 if not os.path.exists(os.path.dirname(save_path)):
                     os.makedirs(os.path.dirname(save_path))
                 shutil.move(filepath, save_path)
