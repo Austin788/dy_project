@@ -35,10 +35,10 @@ if __name__ == "__main__":
     # tag_name = '超火表情包'
     # type = 5 # 资源类型 1-手机壁纸 2-动态壁纸 3-背景图 4-头像 5-表情包
 
-    # txt = f"{base_dir}/甜七.txt"
-    # expert_id = "630"  # hua5ban 631 甜七 630 梓萱 629 小野啊表情包 628
-    # tag_name = '可爱头像'
-    # type = 4  # 资源类型 1-手机壁纸 2-动态壁纸 3-背景图 4-头像 5-表情包
+    txt = f"{base_dir}/甜七.txt"
+    expert_id = "630"  # hua5ban 631 甜七 630 梓萱 629 小野啊表情包 628
+    tag_name = '可爱头像'
+    type = 4  # 资源类型 1-手机壁纸 2-动态壁纸 3-背景图 4-头像 5-表情包
 
     # txt = f"{base_dir}/hua5ban.txt"
     # expert_id = "631"  # hua5ban 631 甜七 630 梓萱 629 小野啊表情包 628
@@ -50,10 +50,10 @@ if __name__ == "__main__":
     # tag_name = '超火头像'
     # type = 4  # 资源类型 1-手机壁纸 2-动态壁纸 3-背景图 4-头像 5-表情包
     #
-    txt = f"{base_dir}/梓萱壁纸.txt"
-    expert_id = "629"  # hua5ban 631 甜七 630 梓萱 629 小野啊表情包 628
-    tag_name = '超火壁纸'
-    type = 1  # 资源类型 1-手机壁纸 2-动态壁纸 3-背景图 4-头像 5-表情包
+    # txt = f"{base_dir}/梓萱壁纸.txt"
+    # expert_id = "629"  # hua5ban 631 甜七 630 梓萱 629 小野啊表情包 628
+    # tag_name = '超火壁纸'
+    # type = 1  # 资源类型 1-手机壁纸 2-动态壁纸 3-背景图 4-头像 5-表情包
 
     print(txt)
 
@@ -95,6 +95,6 @@ if __name__ == "__main__":
 
             cztk_mysqlhelper.insert('qqxcx_wallpaper', data)
             print(Fore.BLACK + f"insert {url}")
-
+            already_save_urls.add(url)
             f.write(url)
             f.write('\n')

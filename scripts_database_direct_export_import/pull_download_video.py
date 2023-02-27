@@ -12,19 +12,8 @@ def md5_value(path):
     return file_md5
 
 if __name__ == "__main__":
-    video_path = "/Volumes/[C] Windows 10/采集素材/"
+    video_path = "/Users/meitu/Documents/midlife_crisis/采集素材/" #一定要以/结尾
     save_dir = "/Users/meitu/Documents/midlife_crisis/project/dy_project/data/素材库/download_video"
-    # save_filenames = "exists_filenames.npz"
-    #
-    #
-    # npz_path = os.path.join(save_dir, save_filenames)
-
-    # if os.path.exists(npz_path):
-    #     data = np.load(npz_path, allow_pickle=True)
-    #     exist_filenames = set(data['arr_0'].tolist())
-    #
-    # else:
-    #     exist_filenames = set()
 
     count = 0
     for dir_path, _, filenames in os.walk(video_path):
@@ -53,14 +42,12 @@ if __name__ == "__main__":
             #     continue
 
             if not os.path.exists(os.path.dirname(dst_path)):
+                print(dst_path)
                 os.makedirs(os.path.dirname(dst_path))
 
             shutil.move(file_path, dst_path)
             print(f"pull {file_path}")
             # shutil.copy(file_path, dst_path)
-            if not filename.endswith(".txt"):
-                with open(file_path, "w") as f:
-                    pass
             count += 1
             # exist_filenames.add(relative_path)
 

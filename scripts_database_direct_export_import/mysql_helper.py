@@ -13,6 +13,16 @@ class MysqlHelper(object):
         "cursorclass": pymysql.cursors.DictCursor
     }
 
+    new_lyqt_conn_params = {
+        'host': '43.142.234.129',
+        'port': 3306,
+        'user': 'new_liyuqutu',
+        'passwd': 'new_liyuqutu',
+        'db': 'new_liyuqutu',
+        'charset': 'utf8',
+        "cursorclass": pymysql.cursors.DictCursor
+    }
+
     lyqt_cztk_conn_params = {
         'host': '43.142.170.84',
         'port': 3306,
@@ -31,7 +41,7 @@ class MysqlHelper(object):
         'charset': 'utf8',
     }
 
-    cztk2_conn_params = {
+    wxtk_conn_params = {
         'host': '43.142.170.84',
         'port': 3306,
         'user': 'dy_image2',

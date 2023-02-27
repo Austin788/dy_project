@@ -9,6 +9,7 @@ from data_util import *
 import json
 import shutil
 import time
+from scripts_database_direct_export_import.match_copywriting import CopyWritingHelper
 
 class AddVideo(Toplevel):
     def __init__(self, master=None):
@@ -39,7 +40,7 @@ class AddVideo(Toplevel):
         tk.Label(self.main_frame, text="快手设备").grid(row=1, column=1)
         tk.Label(self.main_frame, text="抖音设备").grid(row=1, column=2)
 
-        self.ks_dir = "/Users/meitu/同步空间/视频/KS"
+        self.ks_dir = "/Users/meitu/同步空间/KS"
         ks_device_ids = [dirname for dirname in os.listdir(self.ks_dir) if os.path.isdir(os.path.join(self.ks_dir, dirname))]
         self.ks_devices_items = tk.StringVar(value=ks_device_ids)
         self.ks_device_list_box = tk.Listbox(self.main_frame, cursor='arrow', selectborderwidth=2, listvariable=self.ks_devices_items,
@@ -47,7 +48,7 @@ class AddVideo(Toplevel):
         self.ks_device_list_box.grid(row=2, column=1, sticky=NSEW, padx=10)
         self.ks_device_list_box.configure(exportselection=False)
 
-        self.dy_dir = "/Users/meitu/同步空间/视频/DY"
+        self.dy_dir = "/Users/meitu/同步空间/DY"
         dy_device_ids = [dirname for dirname in os.listdir(self.dy_dir) if os.path.isdir(os.path.join(self.dy_dir, dirname))]
         self.dy_devices_items = tk.StringVar(value=dy_device_ids)
         self.dy_device_list_box = tk.Listbox(self.main_frame, cursor='arrow', selectborderwidth=2, listvariable=self.dy_devices_items,
@@ -55,11 +56,17 @@ class AddVideo(Toplevel):
         self.dy_device_list_box.grid(row=2, column=2, sticky=NSEW, padx=10)
         self.dy_device_list_box.configure(exportselection=False)
 
+        self.default_copywriting_path = "/Users/meitu/Documents/midlife_crisis/文案"
+        self.copywriting_str = tk.StringVar()
+        tk.Label(self.main_frame, text="文案路径:").grid(row=3, column=0)
+        tk.Entry(self.main_frame, textvariable=self.copywriting_str, width=80).grid(row=3, column=1, columnspan=2,
+                                                                              sticky=NSEW)
+        tk.Button(self.main_frame, text="选择", command=self.select_copywriting_path, width=10).grid(row=3, column=3)
 
         self.koulin = tk.StringVar()
-        tk.Label(self.main_frame, text="口令:").grid(row=3, column=0)
-        tk.Entry(self.main_frame, textvariable=self.koulin).grid(row=3, column=1, columnspan=2, sticky=NSEW)
-        tk.Button(self.main_frame, text="保存", command=self.save, width=10).grid(row=3, column=3)
+        tk.Label(self.main_frame, text="口令:").grid(row=4, column=0)
+        tk.Entry(self.main_frame, textvariable=self.koulin).grid(row=4, column=1, columnspan=2, sticky=NSEW)
+        tk.Button(self.main_frame, text="保存", command=self.save, width=10).grid(row=4, column=3)
 
         self.main_frame.pack(fill=tk.BOTH, expand=1)
 
@@ -76,6 +83,13 @@ class AddVideo(Toplevel):
         self.video_str.set(self.video_pathes)
 
         print(self.video_pathes)
+
+    def select_copywriting_path(self):
+        copywriting_str = tk.filedialog.askopenfile(filetypes=[("Configuration file", "*.txt")],
+                                                  initialdir=self.default_copywriting_path)
+        print(copywriting_str)
+        self.copywriting_str.set(copywriting_str.name)
+
 
 
     def get_box_list(self, list_box, parent_dir):
@@ -104,6 +118,13 @@ class AddVideo(Toplevel):
             msg.showinfo("状态", f"请先选择导出设备！")
             return
 
+        copywriting_path = self.copywriting_str.get()
+        print(copywriting_path)
+        if len(copywriting_path) > 0 and os.path.exists(copywriting_path):
+            copywriting_helper = CopyWritingHelper(copywriting_path)
+        else:
+            copywriting_helper = None
+
         koulin = self.koulin.get()
         try:
             koulin = f"口令[{koulin}]"
@@ -114,15 +135,25 @@ class AddVideo(Toplevel):
         for i, filepath in enumerate(self.video_pathes):
             filepath = filepath.name
             if str(filepath).endswith('.mp4'):
-                base_filename = os.path.basename(filepath)
-                base_filename = base_filename[base_filename.find("-")+1:]
+
+                copywriting = None
+                if copywriting_helper is not None:
+                    copywriting = copywriting_helper.get_one()
+
+                if copywriting is not None:
+                    base_filename = copywriting + ".mp4"
+                else:
+                    base_filename = os.path.basename(filepath)
+                    base_filename = base_filename[base_filename.find("-")+1:]
+
                 save_path = os.path.join(save_paths[i % len(save_paths)], save_dir, base_filename)
                 if not os.path.exists(os.path.dirname(save_path)):
                     os.makedirs(os.path.dirname(save_path))
                 shutil.move(filepath, save_path)
                 print(f"move {filepath} to {save_path}")
                 # shutil.move()
-
+        if copywriting_helper is not None:
+            copywriting_helper.save()
         msg.showinfo("状态", f"导入成功")
 
 if __name__ == "__main__":
